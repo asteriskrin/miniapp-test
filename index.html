@@ -1,0 +1,19 @@
+<html>
+
+<head>
+    <title>My Web Page</title>
+</head>
+
+<body>
+    <p>tg.initData</p>
+    <pre id="initData"></pre>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        const userData = tg.initDataUnsafe;
+
+        document.getElementById("initData").innerText = JSON.stringify(userData, null, 2);
+    </script>
+</body>
+
+</html>
