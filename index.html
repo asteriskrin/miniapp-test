@@ -5,14 +5,23 @@
 </head>
 
 <body>
-    <p>tg.initData</p>
+    <p>tg.initDataUnsafe</p>
     <pre id="initData"></pre>
+
+    <p>tg.initData (raw)</p>
+    <pre id="rawInitData"></pre>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
-        const userData = tg.initDataUnsafe;
 
+        // Parsed version (object)
+        const userData = tg.initDataUnsafe;
         document.getElementById("initData").innerText = JSON.stringify(userData, null, 2);
+
+        // Raw version (query string)
+        const rawInitData = tg.initData;
+        document.getElementById("rawInitData").innerText = rawInitData;
     </script>
 </body>
 
