@@ -366,6 +366,10 @@
                 addressError.textContent = 'Address is required';
                 addressError.classList.add('show');
                 isValid = false;
+            } else if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+                addressError.textContent = 'Please enter a valid Ethereum address (42 characters starting with 0x)';
+                addressError.classList.add('show');
+                isValid = false;
             }
 
             // Validate tokens selection
@@ -407,9 +411,10 @@
                 tg.sendData(jsonData);
                 
                 // Note: The WebApp will close after sendData is called
-                // If running outside Telegram, show success message
+                // If running outside Telegram (testing only), show generic success message
                 if (!tg.initDataUnsafe.user) {
-                    alert('Form submitted successfully!\nData: ' + jsonData);
+                    console.log('Test data that would be sent:', jsonData);
+                    alert('Form submitted successfully! Check console for details.');
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
