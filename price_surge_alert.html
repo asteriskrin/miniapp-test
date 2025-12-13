@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trading Configuration</title>
+    <title>Price Surge Alert</title>
     <style>
         * {
             margin: 0;
@@ -56,7 +56,7 @@
             color: var(--tg-theme-text-color, #000000);
             outline: none;
             transition: border-color 0.3s;
-            appearance: none; /* For consistent select styling */
+            appearance: none;
         }
 
         input:focus,
@@ -64,7 +64,7 @@
             border-color: var(--tg-theme-button-color, #0088cc);
         }
 
-        /* Token Chips Styling */
+        /* Loading & Chips */
         .loading-container {
             text-align: center;
             padding: 20px;
@@ -114,19 +114,13 @@
             color: var(--tg-theme-text-color, #000000);
         }
 
-        .chip:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Single selection logic specific style */
         .chip.selected {
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
             border-color: var(--tg-theme-button-color, #0088cc);
         }
 
-        /* Toggle Switch for Midnight */
+        /* Toggle Switch */
         .toggle-row {
             display: flex;
             align-items: center;
@@ -208,7 +202,6 @@
             opacity: 0.9;
         }
 
-        /* Utilities */
         .error-message {
             color: #ff3b30;
             font-size: 14px;
@@ -230,7 +223,7 @@
 
 <body>
     <div class="container">
-        <h1>Config</h1>
+        <h1>Price Surge Alert</h1>
         
         <form id="configForm">
             
@@ -241,7 +234,6 @@
                     <span>Loading tokens...</span>
                 </div>
                 <div id="tokensContainer" class="chips-container" style="display: none;"></div>
-                <input type="hidden" id="selectedTokenInput" name="token" required>
                 <div class="error-message" id="tokensError"></div>
             </div>
 
@@ -263,9 +255,9 @@
                 <label for="frequency">Frequency</label>
                 <select id="frequency" name="frequency" required>
                     <option value="" disabled selected>Select frequency</option>
-                    <option value="one_time">One Time</option>
-                    <option value="daily">Daily</option>
-                    <option value="always">Always</option>
+                    <option value="0">One Time</option>
+                    <option value="1">Daily</option>
+                    <option value="2">Always</option>
                 </select>
                 <div class="error-message" id="frequencyError"></div>
             </div>
@@ -296,28 +288,27 @@
                 <div class="error-message" id="volumeError"></div>
             </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">Save Configuration</button>
+            <button type="submit" class="submit-btn" id="submitBtn">Save Alert</button>
         </form>
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Initialize Telegram WebApp
         const tg = window.Telegram?.WebApp || {
             expand: () => {},
             sendData: (data) => console.log('Would send to Telegram:', data),
             initDataUnsafe: {}
         };
         tg.expand();
-        tg.MainButton.hide(); // Using custom button inside webview
+        tg.MainButton.hide();
 
-        // State management
+        // State
         const state = {
             tokens: [],
             selectedToken: null
         };
 
-        // DOM elements
+        // Elements
         const form = document.getElementById('configForm');
         const tokensLoading = document.getElementById('tokensLoading');
         const tokensContainer = document.getElementById('tokensContainer');
@@ -326,13 +317,13 @@
         const midnightInput = document.getElementById('midnight');
         const minVolumeInput = document.getElementById('minVolume');
         
-        // Error elements
+        // Errors
         const tokensError = document.getElementById('tokensError');
         const thresholdError = document.getElementById('thresholdError');
         const frequencyError = document.getElementById('frequencyError');
         const volumeError = document.getElementById('volumeError');
 
-        // Fetch tokens from Hyperliquid API
+        // Fetch tokens
         async function fetchTokens() {
             try {
                 tokensLoading.style.display = 'block';
@@ -357,16 +348,13 @@
                 }
             } catch (error) {
                 console.error('Error fetching tokens:', error);
-                
-                // Fallback mock data
-                state.tokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI', 'DOGE', 'PEPE'];
+                state.tokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI'];
                 renderTokens();
                 tokensError.textContent = 'Using demo list (API unavailable)';
                 tokensError.classList.add('show');
             }
         }
 
-        // Render token chips
         function renderTokens() {
             tokensLoading.style.display = 'none';
             tokensContainer.style.display = 'flex';
@@ -386,11 +374,8 @@
             });
         }
 
-        // Handle Single Token Selection
         function selectToken(token) {
             state.selectedToken = token;
-            
-            // Visual update: clear all, select one
             const allChips = tokensContainer.querySelectorAll('.chip');
             allChips.forEach(chip => {
                 if (chip.textContent === token) {
@@ -399,40 +384,31 @@
                     chip.classList.remove('selected');
                 }
             });
-
-            // Clear error if exists
             tokensError.classList.remove('show');
         }
 
-        // Validate form
         function validateForm() {
             let isValid = true;
-
-            // Reset errors
             document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
 
-            // 1. Token Validation
             if (!state.selectedToken) {
                 tokensError.textContent = 'Please select a token';
                 tokensError.classList.add('show');
                 isValid = false;
             }
 
-            // 2. Threshold Validation
             if (!thresholdInput.value) {
                 thresholdError.textContent = 'Threshold is required';
                 thresholdError.classList.add('show');
                 isValid = false;
             }
 
-            // 3. Frequency Validation
-            if (!frequencyInput.value) {
+            if (frequencyInput.value === "") {
                 frequencyError.textContent = 'Please select a frequency';
                 frequencyError.classList.add('show');
                 isValid = false;
             }
 
-            // 4. Volume Validation
             if (!minVolumeInput.value || parseFloat(minVolumeInput.value) < 0) {
                 volumeError.textContent = 'Please enter a valid minimum volume';
                 volumeError.classList.add('show');
@@ -442,7 +418,6 @@
             return isValid;
         }
 
-        // Handle form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -451,31 +426,28 @@
             const formData = {
                 token: state.selectedToken,
                 threshold: parseFloat(thresholdInput.value),
-                frequency: frequencyInput.value,
-                midnight: midnightInput.checked, // true or false
+                frequency: parseInt(frequencyInput.value), // Sends 0, 1, or 2
+                midnight: midnightInput.checked,
                 minVolume: parseFloat(minVolumeInput.value)
             };
 
-            // Send data to Telegram
             try {
                 const jsonData = JSON.stringify({
-                    type: "ps",
+                    type: "ps", // Updated type
                     data: formData
                 });
                 
                 tg.sendData(jsonData);
                 
-                // Fallback for testing outside Telegram
                 if (!tg.initDataUnsafe.user) {
                     console.log('OUTPUT DATA:', jsonData);
-                    alert('Configuration saved! Check console for data.');
+                    alert('Alert saved! Check console for data.');
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
             }
         });
 
-        // Initialize
         fetchTokens();
     </script>
 </body>
