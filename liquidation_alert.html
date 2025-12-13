@@ -407,7 +407,10 @@
 
             // Send data to Telegram bot
             try {
-                const jsonData = JSON.stringify(formData);
+                const jsonData = JSON.stringify({
+                    type: "liq",
+                    data: formData
+                });
                 tg.sendData(jsonData);
                 
                 // Note: The WebApp will close after sendData is called
