@@ -442,11 +442,20 @@
 
             if (!validateForm()) return;
 
+            // Prepare the Nested Enum Object for Rust Serde
+            let priceThresholdKind;
+            const rawVal = parseFloat(priceThresholdInput.value);
+
+            if (state.isPercentage) {
+                priceThresholdKind = { Percentage: rawVal };
+            } else {
+                priceThresholdKind = { RawValue: rawVal };
+            }
+
             const formData = {
                 token: state.selectedToken,
-                price_threshold: parseFloat(priceThresholdInput.value),
-                is_percentage: state.isPercentage, // Helper boolean to distinguish type
-                one_time: oneTimeInput.checked     // Boolean
+                price_threshold: priceThresholdKind, // Object matching Rust Enum
+                one_time: oneTimeInput.checked
             };
 
             try {
