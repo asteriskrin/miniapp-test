@@ -255,9 +255,9 @@
                 <label for="frequency">Frequency</label>
                 <select id="frequency" name="frequency" required>
                     <option value="" disabled selected>Select frequency</option>
-                    <option value="one_time">One Time</option>
-                    <option value="daily">Daily</option>
-                    <option value="always">Always</option>
+                    <option value="OneTime">One Time</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Always">Always</option>
                 </select>
                 <div class="error-message" id="frequencyError"></div>
             </div>
@@ -403,7 +403,7 @@
             const formData = {
                 token: state.selectedToken,
                 threshold: parseFloat(thresholdInput.value),
-                frequency: frequencyInput.value, // Sends "one_time", "daily", or "always"
+                frequency: frequencyInput.value, // Sends "OneTime", "Daily", or "Always"
                 midnight: midnightInput.checked
             };
 
