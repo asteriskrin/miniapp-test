@@ -402,7 +402,7 @@
             const formData = {
                 address: addressInput.value.trim(),
                 tokens: Array.from(state.selectedTokens),
-                size: parseFloat(sizeInput.value)
+                minimum_size: parseFloat(sizeInput.value)
             };
 
             // Send data to Telegram bot
