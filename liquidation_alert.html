@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Telegram Mini App Form</title>
+    <title>Liquidation Alert</title>
     <style>
         * {
             margin: 0;
@@ -18,11 +18,13 @@
             color: var(--tg-theme-text-color, #000000);
             padding: 16px;
             line-height: 1.5;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
+            padding-bottom: 40px;
         }
 
         h1 {
@@ -34,6 +36,7 @@
 
         .form-group {
             margin-bottom: 24px;
+            position: relative;
         }
 
         label {
@@ -44,8 +47,7 @@
             color: var(--tg-theme-text-color, #000000);
         }
 
-        input[type="text"],
-        input[type="number"] {
+        input[type="text"] {
             width: 100%;
             padding: 12px 16px;
             font-size: 16px;
@@ -55,33 +57,123 @@
             color: var(--tg-theme-text-color, #000000);
             outline: none;
             transition: border-color 0.3s;
+            appearance: none;
         }
 
-        input[type="text"]:focus,
-        input[type="number"]:focus {
+        input:focus {
             border-color: var(--tg-theme-button-color, #0088cc);
         }
 
-        .loading-container {
-            text-align: center;
-            padding: 20px;
-            color: var(--tg-theme-hint-color, #999999);
+        /* --- Search Dropdown Styles --- */
+        
+        .search-wrapper {
+            position: relative;
         }
 
+        /* Selected Chips Area */
+        .selected-chips-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+            min-height: 0; 
+        }
+
+        .selected-chip {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .selected-chip .remove-btn {
+            margin-left: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+        
+        .selected-chip .remove-btn:hover {
+            opacity: 1;
+        }
+
+        /* Dropdown List */
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            border: 1px solid var(--tg-theme-hint-color, #999999);
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            margin-top: 4px;
+        }
+
+        .dropdown-list.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+
+        .dropdown-item.no-results {
+            color: var(--tg-theme-hint-color, #999999);
+            cursor: default;
+            text-align: center;
+        }
+
+        /* Loading Spinner */
         .loading-spinner {
-            display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(0,0,0,0.1);
             border-top-color: var(--tg-theme-button-color, #0088cc);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            display: none;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-top: 24px;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.9;
         }
 
         .error-message {
@@ -95,79 +187,6 @@
             display: block;
         }
 
-        .chips-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            min-height: 100px;
-            padding: 12px;
-            border: 1px solid var(--tg-theme-hint-color, #999999);
-            border-radius: 8px;
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 12px;
-            font-size: 14px;
-            border-radius: 16px;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.2s;
-            border: 1px solid var(--tg-theme-hint-color, #cccccc);
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-        }
-
-        .chip:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .chip.selected {
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border-color: var(--tg-theme-button-color, #0088cc);
-        }
-
-        .chip.selected::after {
-            content: '✓';
-            margin-left: 6px;
-            font-weight: bold;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 14px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            cursor: pointer;
-            transition: opacity 0.3s;
-            margin-top: 8px;
-        }
-
-        .submit-btn:hover:not(:disabled) {
-            opacity: 0.9;
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .selected-count {
-            font-size: 12px;
-            color: var(--tg-theme-hint-color, #999999);
-            margin-top: 4px;
-        }
-
         .hint-text {
             font-size: 12px;
             color: var(--tg-theme-hint-color, #999999);
@@ -178,10 +197,10 @@
 
 <body>
     <div class="container">
-        <h1>Trading Form</h1>
+        <h1>Liquidation Alert</h1>
         
-        <form id="tradingForm">
-            <!-- Address Field -->
+        <form id="configForm">
+            
             <div class="form-group">
                 <label for="address">Address</label>
                 <input 
@@ -194,28 +213,34 @@
                 <div class="error-message" id="addressError"></div>
             </div>
 
-            <!-- Tokens Field -->
             <div class="form-group">
-                <label for="tokens">Select Tokens</label>
-                <div id="tokensLoading" class="loading-container">
-                    <div class="loading-spinner"></div>
-                    <span>Loading tokens...</span>
+                <label>Select Tokens</label>
+                
+                <div class="selected-chips-area" id="selectedChipsArea"></div>
+
+                <div class="search-wrapper">
+                    <input 
+                        type="text" 
+                        id="tokenSearch" 
+                        placeholder="Search to add tokens..." 
+                        autocomplete="off"
+                    >
+                    <div id="loadingSpinner" class="loading-spinner"></div>
+                    
+                    <div id="dropdownList" class="dropdown-list"></div>
                 </div>
-                <div id="tokensContainer" class="chips-container" style="display: none;"></div>
-                <div class="selected-count" id="selectedCount">0 tokens selected</div>
+
                 <div class="error-message" id="tokensError"></div>
             </div>
 
-            <!-- Size Field -->
             <div class="form-group">
                 <label for="size">Size (USD)</label>
                 <input 
-                    type="number" 
+                    type="text" 
+                    inputmode="decimal"
                     id="size" 
                     name="size" 
                     placeholder="Enter size in USD"
-                    min="0"
-                    step="0.01"
                     required
                 >
                 <div class="hint-text">Enter the amount in USD</div>
@@ -228,139 +253,157 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Initialize Telegram WebApp (with fallback for testing)
         const tg = window.Telegram?.WebApp || {
             expand: () => {},
             sendData: (data) => console.log('Would send to Telegram:', data),
             initDataUnsafe: {}
         };
         tg.expand();
+        tg.MainButton.hide();
 
-        // State management
+        // State
         const state = {
-            tokens: [],
+            allTokens: [],
+            filteredTokens: [],
             selectedTokens: new Set()
         };
 
-        // DOM elements
-        const form = document.getElementById('tradingForm');
+        // DOM Elements
+        const form = document.getElementById('configForm');
         const addressInput = document.getElementById('address');
+        const tokenSearchInput = document.getElementById('tokenSearch');
+        const dropdownList = document.getElementById('dropdownList');
+        const selectedChipsArea = document.getElementById('selectedChipsArea');
+        const loadingSpinner = document.getElementById('loadingSpinner');
         const sizeInput = document.getElementById('size');
-        const tokensLoading = document.getElementById('tokensLoading');
-        const tokensContainer = document.getElementById('tokensContainer');
-        const selectedCount = document.getElementById('selectedCount');
-        const submitBtn = document.getElementById('submitBtn');
+        
+        // Errors
         const addressError = document.getElementById('addressError');
         const tokensError = document.getElementById('tokensError');
         const sizeError = document.getElementById('sizeError');
 
-        // Fetch tokens from Hyperliquid API
+        // --- Fetch Data ---
         async function fetchTokens() {
             try {
-                tokensLoading.style.display = 'block';
-                tokensContainer.style.display = 'none';
-                tokensError.classList.remove('show');
-
+                loadingSpinner.style.display = 'block';
                 const response = await fetch('https://api.hyperliquid.xyz/info', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type: 'meta' })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch tokens');
-                }
+                if (!response.ok) throw new Error('Failed to fetch tokens');
 
                 const data = await response.json();
                 
-                // Extract token names from universe array
                 if (data.universe && Array.isArray(data.universe)) {
-                    state.tokens = data.universe
+                    state.allTokens = data.universe
                         .filter(token => token.name)
                         .map(token => token.name);
-                    
-                    renderTokens();
-                } else {
-                    throw new Error('Invalid response format');
                 }
             } catch (error) {
                 console.error('Error fetching tokens:', error);
-                
-                // Fallback to mock data for testing/demo purposes
-                console.log('Using mock token data for testing');
-                state.tokens = [
-                    'BTC', 'ETH', 'SOL', 'MATIC', 'AVAX', 'ARB', 
-                    'OP', 'LINK', 'UNI', 'AAVE', 'MKR', 'SNX',
-                    'CRV', 'LDO', 'RPL', 'FXS', 'CVX', 'BAL'
-                ];
-                renderTokens();
-                
-                // Still show error message but with fallback note
-                tokensError.textContent = 'Using demo tokens (API unavailable in test environment)';
-                tokensError.style.color = '#ff9500';
-                tokensError.classList.add('show');
-                tokensLoading.style.display = 'none';
+                state.allTokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI'];
+            } finally {
+                loadingSpinner.style.display = 'none';
             }
         }
 
-        // Render token chips
-        function renderTokens() {
-            tokensLoading.style.display = 'none';
-            tokensContainer.style.display = 'flex';
-            tokensContainer.innerHTML = '';
+        // --- Render Functions ---
 
-            if (state.tokens.length === 0) {
-                tokensContainer.innerHTML = '<p style="margin: auto; color: var(--tg-theme-hint-color, #999999);">No tokens available</p>';
+        function renderDropdown(filterText = '') {
+            dropdownList.innerHTML = '';
+            
+            const query = filterText.toLowerCase();
+            state.filteredTokens = state.allTokens.filter(token => {
+                const matchesSearch = token.toLowerCase().includes(query);
+                const notSelected = !state.selectedTokens.has(token);
+                return matchesSearch && notSelected;
+            });
+
+            if (state.filteredTokens.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.className = 'dropdown-item no-results';
+                noResult.textContent = query ? 'No tokens found' : 'All tokens selected';
+                dropdownList.appendChild(noResult);
                 return;
             }
 
-            state.tokens.forEach(token => {
-                const chip = document.createElement('div');
-                chip.className = 'chip';
-                chip.textContent = token;
-                chip.dataset.token = token;
-
-                if (state.selectedTokens.has(token)) {
-                    chip.classList.add('selected');
-                }
-
-                chip.addEventListener('click', () => toggleToken(token, chip));
-                tokensContainer.appendChild(chip);
+            state.filteredTokens.slice(0, 50).forEach(token => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = token;
+                
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); 
+                    addToken(token);
+                });
+                
+                dropdownList.appendChild(item);
             });
-
-            updateSelectedCount();
         }
 
-        // Toggle token selection
-        function toggleToken(token, chipElement) {
-            if (state.selectedTokens.has(token)) {
-                state.selectedTokens.delete(token);
-                chipElement.classList.remove('selected');
-            } else {
-                state.selectedTokens.add(token);
-                chipElement.classList.add('selected');
+        function renderSelectedChips() {
+            selectedChipsArea.innerHTML = '';
+            
+            state.selectedTokens.forEach(token => {
+                const chip = document.createElement('div');
+                chip.className = 'selected-chip';
+                chip.innerHTML = `
+                    ${token}
+                    <span class="remove-btn" onclick="removeToken('${token}')">&times;</span>
+                `;
+                selectedChipsArea.appendChild(chip);
+            });
+        }
+
+        // --- Interaction Logic ---
+
+        function addToken(token) {
+            state.selectedTokens.add(token);
+            tokenSearchInput.value = ''; 
+            renderSelectedChips();
+            renderDropdown(); 
+            dropdownList.classList.remove('show'); 
+            tokensError.classList.remove('show');
+        }
+
+        window.removeToken = function(token) {
+            state.selectedTokens.delete(token);
+            renderSelectedChips();
+        };
+
+        tokenSearchInput.addEventListener('input', (e) => {
+            renderDropdown(e.target.value);
+            dropdownList.classList.add('show');
+        });
+
+        tokenSearchInput.addEventListener('focus', () => {
+            renderDropdown(tokenSearchInput.value);
+            dropdownList.classList.add('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrapper')) {
+                dropdownList.classList.remove('show');
             }
-            updateSelectedCount();
+        });
+
+        // Helper: Parse Input (Mobile Friendly)
+        function parseInput(val) {
+            if (!val) return NaN;
+            return parseFloat(val.replace(/,/g, '.'));
         }
 
-        // Update selected count display
-        function updateSelectedCount() {
-            const count = state.selectedTokens.size;
-            selectedCount.textContent = `${count} token${count !== 1 ? 's' : ''} selected`;
-        }
+        // --- Validation & Submit ---
 
-        // Validate form
         function validateForm() {
             let isValid = true;
-
-            // Clear previous errors
             addressError.classList.remove('show');
             tokensError.classList.remove('show');
             sizeError.classList.remove('show');
 
-            // Validate address
+            // Address
             const address = addressInput.value.trim();
             if (!address) {
                 addressError.textContent = 'Address is required';
@@ -372,16 +415,16 @@
                 isValid = false;
             }
 
-            // Validate tokens selection
+            // Tokens
             if (state.selectedTokens.size === 0) {
                 tokensError.textContent = 'Please select at least one token';
                 tokensError.classList.add('show');
                 isValid = false;
             }
 
-            // Validate size
-            const size = parseFloat(sizeInput.value);
-            if (isNaN(size) || size <= 0) {
+            // Size
+            const sizeVal = parseInput(sizeInput.value);
+            if (!sizeInput.value || isNaN(sizeVal) || sizeVal <= 0) {
                 sizeError.textContent = 'Size must be a positive number';
                 sizeError.classList.add('show');
                 isValid = false;
@@ -390,44 +433,35 @@
             return isValid;
         }
 
-        // Handle form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            if (!validateForm()) {
-                return;
-            }
+            if (!validateForm()) return;
 
-            // Prepare form data
             const formData = {
                 address: addressInput.value.trim(),
                 tokens: Array.from(state.selectedTokens),
-                minimum_sz: parseFloat(sizeInput.value)
+                minimum_sz: parseInput(sizeInput.value)
             };
 
-            // Send data to Telegram bot
             try {
                 const jsonData = JSON.stringify({
                     type: "liq",
                     data: formData
                 });
+                
                 tg.sendData(jsonData);
                 
-                // Note: The WebApp will close after sendData is called
-                // If running outside Telegram (testing only), show generic success message
                 if (!tg.initDataUnsafe.user) {
-                    console.log('Test data that would be sent:', jsonData);
-                    alert('Form submitted successfully! Check console for details.');
+                    console.log('OUTPUT DATA:', jsonData);
+                    alert('Form submitted! Check console for details.');
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
-                alert('Error sending data. Please try again.');
             }
         });
 
-        // Initialize: Fetch tokens on page load
         fetchTokens();
     </script>
 </body>
-
 </html>
