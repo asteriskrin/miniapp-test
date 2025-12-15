@@ -73,11 +73,9 @@
             position: relative;
         }
 
-        /* Selected Chips Area */
-        .selected-chips-area {
+        /* Selected Chip Area */
+        .selected-chip-area {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
             margin-bottom: 8px;
             min-height: 0; 
         }
@@ -87,17 +85,20 @@
             align-items: center;
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 500;
             user-select: none;
         }
 
         .selected-chip .remove-btn {
-            margin-left: 8px;
+            margin-left: 10px;
             cursor: pointer;
             font-weight: bold;
             opacity: 0.8;
+            font-size: 18px;
+            line-height: 1;
         }
         
         .selected-chip .remove-btn:hover {
@@ -142,7 +143,7 @@
             text-align: center;
         }
 
-        /* Loading Spinner for Search */
+        /* Loading Spinner */
         .loading-spinner {
             width: 20px;
             height: 20px;
@@ -268,15 +269,15 @@
         <form id="configForm">
             
             <div class="form-group">
-                <label>Select Tokens</label>
+                <label>Select Token</label>
                 
-                <div class="selected-chips-area" id="selectedChipsArea"></div>
+                <div class="selected-chip-area" id="selectedChipArea"></div>
 
-                <div class="search-wrapper">
+                <div class="search-wrapper" id="searchWrapper">
                     <input 
                         type="text" 
                         id="tokenSearch" 
-                        placeholder="Search to add tokens..." 
+                        placeholder="Search token (e.g. BTC)..." 
                         autocomplete="off"
                     >
                     <div id="loadingSpinner" class="loading-spinner"></div>
@@ -342,14 +343,15 @@
         const state = {
             allTokens: [],
             filteredTokens: [],
-            selectedTokens: new Set()
+            selectedToken: null // Changed from Set to single value
         };
 
         // DOM Elements
         const form = document.getElementById('configForm');
         const tokenSearchInput = document.getElementById('tokenSearch');
         const dropdownList = document.getElementById('dropdownList');
-        const selectedChipsArea = document.getElementById('selectedChipsArea');
+        const selectedChipArea = document.getElementById('selectedChipArea');
+        const searchWrapper = document.getElementById('searchWrapper');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const thresholdInput = document.getElementById('threshold');
         const frequencyInput = document.getElementById('frequency');
@@ -394,16 +396,15 @@
             dropdownList.innerHTML = '';
             
             const query = filterText.toLowerCase();
+            // Filter tokens based on search
             state.filteredTokens = state.allTokens.filter(token => {
-                const matchesSearch = token.toLowerCase().includes(query);
-                const notSelected = !state.selectedTokens.has(token);
-                return matchesSearch && notSelected;
+                return token.toLowerCase().includes(query);
             });
 
             if (state.filteredTokens.length === 0) {
                 const noResult = document.createElement('div');
                 noResult.className = 'dropdown-item no-results';
-                noResult.textContent = query ? 'No tokens found' : 'All tokens selected';
+                noResult.textContent = 'No tokens found';
                 dropdownList.appendChild(noResult);
                 return;
             }
@@ -416,42 +417,49 @@
                 
                 item.addEventListener('mousedown', (e) => {
                     e.preventDefault(); 
-                    addToken(token);
+                    selectToken(token);
                 });
                 
                 dropdownList.appendChild(item);
             });
         }
 
-        // 2. Render Selected Chips
-        function renderSelectedChips() {
-            selectedChipsArea.innerHTML = '';
+        // 2. Render Selected Chip
+        function renderSelectedChip() {
+            selectedChipArea.innerHTML = '';
             
-            state.selectedTokens.forEach(token => {
+            if (state.selectedToken) {
+                // Hide search input when token is selected
+                searchWrapper.style.display = 'none';
+                
                 const chip = document.createElement('div');
                 chip.className = 'selected-chip';
                 chip.innerHTML = `
-                    ${token}
-                    <span class="remove-btn" onclick="removeToken('${token}')">&times;</span>
+                    ${state.selectedToken}
+                    <span class="remove-btn" onclick="clearSelection()">&times;</span>
                 `;
-                selectedChipsArea.appendChild(chip);
-            });
+                selectedChipArea.appendChild(chip);
+            } else {
+                // Show search input when no token is selected
+                searchWrapper.style.display = 'block';
+                tokenSearchInput.value = '';
+            }
         }
 
         // --- Interaction Logic ---
 
-        function addToken(token) {
-            state.selectedTokens.add(token);
-            tokenSearchInput.value = ''; 
-            renderSelectedChips();
-            renderDropdown(); 
-            dropdownList.classList.remove('show'); 
+        function selectToken(token) {
+            state.selectedToken = token;
+            renderSelectedChip();
             tokensError.classList.remove('show');
         }
 
-        window.removeToken = function(token) {
-            state.selectedTokens.delete(token);
-            renderSelectedChips();
+        // Exposed globally for the onclick handler
+        window.clearSelection = function() {
+            state.selectedToken = null;
+            renderSelectedChip();
+            // Refocus search for better UX
+            setTimeout(() => tokenSearchInput.focus(), 50);
         };
 
         // Event Listeners
@@ -484,8 +492,8 @@
             document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
 
             // Token Validation
-            if (state.selectedTokens.size === 0) {
-                tokensError.textContent = 'Please select at least one token';
+            if (!state.selectedToken) {
+                tokensError.textContent = 'Please select a token';
                 tokensError.classList.add('show');
                 isValid = false;
             }
@@ -493,7 +501,7 @@
             // Threshold Validation
             const thresholdVal = parseInput(thresholdInput.value);
             if (!thresholdInput.value || isNaN(thresholdVal)) {
-                thresholdError.textContent = 'Please enter a valid threshold';
+                thresholdError.textContent = 'Please enter a valid numeric threshold';
                 thresholdError.classList.add('show');
                 isValid = false;
             }
@@ -514,7 +522,7 @@
             if (!validateForm()) return;
 
             const formData = {
-                tokens: Array.from(state.selectedTokens), // Converted to array of strings
+                token: state.selectedToken, // Single string
                 threshold: parseInput(thresholdInput.value),
                 frequency: frequencyInput.value,
                 midnight: midnightInput.checked
