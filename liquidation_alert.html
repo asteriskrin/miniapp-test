@@ -39,12 +39,33 @@
             position: relative;
         }
 
+        /* Label Row for aligning Label and Select All button */
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
         label {
             display: block;
             font-size: 14px;
             font-weight: 500;
-            margin-bottom: 8px;
             color: var(--tg-theme-text-color, #000000);
+            margin-bottom: 0; /* Handled by row */
+        }
+
+        .select-all-btn {
+            font-size: 14px;
+            color: var(--tg-theme-button-color, #0088cc);
+            cursor: pointer;
+            font-weight: 500;
+            user-select: none;
+            display: none; /* Hidden until tokens load */
+        }
+
+        .select-all-btn:hover {
+            text-decoration: underline;
         }
 
         input[type="text"] {
@@ -88,6 +109,11 @@
             border-radius: 16px;
             font-size: 14px;
             user-select: none;
+        }
+
+        /* Different style for the "All Selected" chip */
+        .selected-chip.special {
+            background-color: var(--tg-theme-text-color, #333);
         }
 
         .selected-chip .remove-btn {
@@ -202,7 +228,9 @@
         <form id="configForm">
             
             <div class="form-group">
-                <label for="address">Address</label>
+                <div class="label-row">
+                    <label for="address">Address</label>
+                </div>
                 <input 
                     type="text" 
                     id="address" 
@@ -214,7 +242,10 @@
             </div>
 
             <div class="form-group">
-                <label>Select Tokens</label>
+                <div class="label-row">
+                    <label>Select Tokens</label>
+                    <span id="selectAllBtn" class="select-all-btn">Select All</span>
+                </div>
                 
                 <div class="selected-chips-area" id="selectedChipsArea"></div>
 
@@ -234,7 +265,9 @@
             </div>
 
             <div class="form-group">
-                <label for="size">Size (USD)</label>
+                <div class="label-row">
+                    <label for="size">Size (USD)</label>
+                </div>
                 <input 
                     type="text" 
                     inputmode="decimal"
@@ -276,6 +309,7 @@
         const selectedChipsArea = document.getElementById('selectedChipsArea');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const sizeInput = document.getElementById('size');
+        const selectAllBtn = document.getElementById('selectAllBtn');
         
         // Errors
         const addressError = document.getElementById('addressError');
@@ -301,15 +335,27 @@
                         .filter(token => token.name)
                         .map(token => token.name);
                 }
+                
+                // Show the Select All button once we have data
+                if (state.allTokens.length > 0) {
+                    selectAllBtn.style.display = 'block';
+                }
+
             } catch (error) {
                 console.error('Error fetching tokens:', error);
                 state.allTokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI'];
+                selectAllBtn.style.display = 'block';
             } finally {
                 loadingSpinner.style.display = 'none';
             }
         }
 
         // --- Render Functions ---
+
+        function updateSelectAllBtnText() {
+            const isAllSelected = state.selectedTokens.size === state.allTokens.length && state.allTokens.length > 0;
+            selectAllBtn.textContent = isAllSelected ? "Deselect All" : "Select All";
+        }
 
         function renderDropdown(filterText = '') {
             dropdownList.innerHTML = '';
@@ -346,15 +392,32 @@
         function renderSelectedChips() {
             selectedChipsArea.innerHTML = '';
             
-            state.selectedTokens.forEach(token => {
+            // Check if ALL are selected
+            const isAllSelected = state.selectedTokens.size === state.allTokens.length && state.allTokens.length > 0;
+
+            if (isAllSelected) {
+                // Render just ONE chip for better UI performance and look
                 const chip = document.createElement('div');
-                chip.className = 'selected-chip';
+                chip.className = 'selected-chip special';
                 chip.innerHTML = `
-                    ${token}
-                    <span class="remove-btn" onclick="removeToken('${token}')">&times;</span>
+                    All Tokens Selected (${state.selectedTokens.size})
+                    <span class="remove-btn" onclick="removeAllTokens()">&times;</span>
                 `;
                 selectedChipsArea.appendChild(chip);
-            });
+            } else {
+                // Render individual chips
+                state.selectedTokens.forEach(token => {
+                    const chip = document.createElement('div');
+                    chip.className = 'selected-chip';
+                    chip.innerHTML = `
+                        ${token}
+                        <span class="remove-btn" onclick="removeToken('${token}')">&times;</span>
+                    `;
+                    selectedChipsArea.appendChild(chip);
+                });
+            }
+            
+            updateSelectAllBtnText();
         }
 
         // --- Interaction Logic ---
@@ -371,7 +434,32 @@
         window.removeToken = function(token) {
             state.selectedTokens.delete(token);
             renderSelectedChips();
+            renderDropdown(tokenSearchInput.value); // Refresh dropdown availability
         };
+
+        window.removeAllTokens = function() {
+            state.selectedTokens.clear();
+            renderSelectedChips();
+            renderDropdown(tokenSearchInput.value);
+        }
+
+        // --- Toggle Select All ---
+        selectAllBtn.addEventListener('click', () => {
+            const isAllSelected = state.selectedTokens.size === state.allTokens.length;
+
+            if (isAllSelected) {
+                // Deselect All
+                state.selectedTokens.clear();
+            } else {
+                // Select All
+                state.allTokens.forEach(token => state.selectedTokens.add(token));
+            }
+            
+            tokenSearchInput.value = ''; // clear search
+            tokensError.classList.remove('show');
+            renderSelectedChips();
+            renderDropdown();
+        });
 
         tokenSearchInput.addEventListener('input', (e) => {
             renderDropdown(e.target.value);
@@ -454,7 +542,7 @@
                 
                 if (!tg.initDataUnsafe.user) {
                     console.log('OUTPUT DATA:', jsonData);
-                    alert('Form submitted! Check console for details.');
+                    alert(`Form submitted! ${state.selectedTokens.size} tokens selected.`);
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
