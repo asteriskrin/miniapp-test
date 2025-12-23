@@ -185,7 +185,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json', // CRITICAL: Required for Rust to parse the body as JSON
-                        'X-Init-Telegram-Data': base64Data
+                        'x-init-telegram-data': base64Data
                     },
                     body: JSON.stringify(userData.user)
                 });
@@ -239,7 +239,7 @@
                 
                 await fetch(`${API_BASE}/alert/telegram/${alertId}`, {
                     method: 'DELETE',
-                    headers: { 'X-Init-Telegram-Data': base64Data }
+                    headers: { 'x-init-telegram-data': base64Data }
                 });
                 
                 const card = document.getElementById(`card-${alertId}`);
