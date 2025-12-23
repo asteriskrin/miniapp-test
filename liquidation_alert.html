@@ -6,6 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Liquidation Alert</title>
     <style>
+        /* --- THEME SETUP --- */
+        :root {
+            /* Default Light Mode Colors */
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --secondary-bg-color: #f0f0f0;
+            --hint-color: #999999;
+            --button-color: #0088cc;
+            --button-text-color: #ffffff;
+            --danger-color: #ff3b30;
+        }
+
+        /* System Dark Mode Overrides */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1c1c1e; /* Dark Gray/Black */
+                --text-color: #ffffff;
+                --secondary-bg-color: #2c2c2e; /* Slightly lighter for inputs */
+                --hint-color: #8e8e93;
+                --button-color: #0088cc;
+                --button-text-color: #ffffff;
+                --danger-color: #ff453a;
+            }
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,8 +39,9 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
+            /* Use Telegram var if available, otherwise use system adaptive var */
+            background-color: var(--tg-theme-bg-color, var(--bg-color));
+            color: var(--tg-theme-text-color, var(--text-color));
             padding: 16px;
             line-height: 1.5;
             min-height: 100vh;
@@ -31,7 +57,7 @@
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 24px;
-            color: var(--tg-theme-text-color, #000000);
+            color: var(--tg-theme-text-color, var(--text-color));
         }
 
         .form-group {
@@ -51,13 +77,13 @@
             display: block;
             font-size: 14px;
             font-weight: 500;
-            color: var(--tg-theme-text-color, #000000);
-            margin-bottom: 0; /* Handled by row */
+            color: var(--tg-theme-text-color, var(--text-color));
+            margin-bottom: 0;
         }
 
         .select-all-btn {
             font-size: 14px;
-            color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-color, var(--button-color));
             cursor: pointer;
             font-weight: 500;
             user-select: none;
@@ -72,17 +98,17 @@
             width: 100%;
             padding: 12px 16px;
             font-size: 16px;
-            border: 1px solid var(--tg-theme-hint-color, #999999);
+            border: 1px solid var(--tg-theme-hint-color, var(--hint-color));
             border-radius: 8px;
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            color: var(--tg-theme-text-color, #000000);
+            background-color: var(--tg-theme-secondary-bg-color, var(--secondary-bg-color));
+            color: var(--tg-theme-text-color, var(--text-color));
             outline: none;
             transition: border-color 0.3s;
             appearance: none;
         }
 
         input:focus {
-            border-color: var(--tg-theme-button-color, #0088cc);
+            border-color: var(--tg-theme-button-color, var(--button-color));
         }
 
         /* --- Search Dropdown Styles --- */
@@ -103,17 +129,19 @@
         .selected-chip {
             display: inline-flex;
             align-items: center;
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background-color: var(--tg-theme-button-color, var(--button-color));
+            color: var(--tg-theme-button-text-color, var(--button-text-color));
             padding: 6px 12px;
             border-radius: 16px;
             font-size: 14px;
             user-select: none;
         }
 
-        /* Different style for the "All Selected" chip */
+        /* Different style for the "All Selected" chip 
+           Uses inverted colors (Text Color as BG) for high contrast in both modes */
         .selected-chip.special {
-            background-color: var(--tg-theme-text-color, #333);
+            background-color: var(--tg-theme-text-color, var(--text-color));
+            color: var(--tg-theme-bg-color, var(--bg-color));
         }
 
         .selected-chip .remove-btn {
@@ -133,8 +161,8 @@
             top: 100%;
             left: 0;
             right: 0;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            border: 1px solid var(--tg-theme-hint-color, #999999);
+            background-color: var(--tg-theme-bg-color, var(--bg-color));
+            border: 1px solid var(--tg-theme-hint-color, var(--hint-color));
             border-radius: 8px;
             max-height: 250px;
             overflow-y: auto;
@@ -152,15 +180,15 @@
             padding: 12px 16px;
             cursor: pointer;
             transition: background-color 0.2s;
-            color: var(--tg-theme-text-color, #000000);
+            color: var(--tg-theme-text-color, var(--text-color));
         }
 
         .dropdown-item:hover {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            background-color: var(--tg-theme-secondary-bg-color, var(--secondary-bg-color));
         }
 
         .dropdown-item.no-results {
-            color: var(--tg-theme-hint-color, #999999);
+            color: var(--tg-theme-hint-color, var(--hint-color));
             cursor: default;
             text-align: center;
         }
@@ -170,7 +198,7 @@
             width: 20px;
             height: 20px;
             border: 2px solid rgba(0,0,0,0.1);
-            border-top-color: var(--tg-theme-button-color, #0088cc);
+            border-top-color: var(--tg-theme-button-color, var(--button-color));
             border-radius: 50%;
             animation: spin 1s linear infinite;
             position: absolute;
@@ -191,8 +219,8 @@
             font-weight: 600;
             border: none;
             border-radius: 8px;
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background-color: var(--tg-theme-button-color, var(--button-color));
+            color: var(--tg-theme-button-text-color, var(--button-text-color));
             cursor: pointer;
             transition: opacity 0.3s;
             margin-top: 24px;
@@ -203,7 +231,7 @@
         }
 
         .error-message {
-            color: #ff3b30;
+            color: var(--danger-color);
             font-size: 14px;
             margin-top: 8px;
             display: none;
@@ -215,7 +243,7 @@
 
         .hint-text {
             font-size: 12px;
-            color: var(--tg-theme-hint-color, #999999);
+            color: var(--tg-theme-hint-color, var(--hint-color));
             margin-top: 4px;
         }
     </style>
