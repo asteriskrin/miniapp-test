@@ -141,7 +141,7 @@
         const API_BASE = "https://alerts.blockliquidity.xyz/v1";
 
         const ALERT_TYPES = [
-            { id: 1, label: "Price" },
+            { id: 1, label: "Token Price" },
             { id: 2, label: "Liquidations" },
             { id: 3, label: "Open Interest" },
             { id: 5, label: "Volume" },
@@ -214,13 +214,22 @@
 
             content.innerHTML = alerts.map(alert => {
                 const desc = formatDescription(alert);
-                const tokenName = alert.token_id ? `#${alert.token_id}` : "Global"; 
+                const tokenName = alert.token_id ? `#${alert.token_id}` : "Global";
+                const ex = alert.extra;
+                let freq = 'Always';
+                if ex.frequency === 0 {
+                    freq = 'One-time'
+                }
+                if ex.frequency === 1 {
+                    freq = 'Daily'
+                }
+                let one_time = alert.one_time ?? freq;
                 
                 return `
                 <div class="alert-card" id="card-${alert.id_str}">
                     <div class="card-header">
                         <span class="token-badge">🔔 ${tokenName}</span>
-                        <span class="date-badge">${alert.one_time ? 'One-time' : 'Recurring'}</span>
+                        <span class="date-badge">${one_time}</span>
                     </div>
                     <div class="card-body">${desc}</div>
                     <div class="card-footer">
@@ -257,8 +266,8 @@
             const ex = alert.extra || {}; 
 
             if (k === 1) { 
-                const p = alert.target_price || 0;
-                const dir = alert.direction === 1 ? "above" : "below";
+                const p = ex.price_threshold || 0;
+                const dir = ex.direction === 1 ? "above" : "below";
                 return `Notify if <b>${alert.extra.token}</b> price goes ${dir} <b>$${p}</b>`;
             }
             if (k === 2) { 
