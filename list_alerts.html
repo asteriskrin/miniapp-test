@@ -14,6 +14,7 @@
             --btn-txt: var(--tg-theme-button-text-color, #fff);
             --secondary-bg: var(--tg-theme-secondary-bg-color, #f1f1f1);
             --danger: #ff3b30;
+            --warning: #f5a623; /* Orange for One-time alerts */
         }
 
         body {
@@ -77,9 +78,18 @@
             font-weight: 700; font-size: 15px;
             display: flex; align-items: center; gap: 6px;
         }
+        
+        /* --- NEW BADGE STYLING --- */
         .date-badge {
-            font-size: 11px; color: var(--hint);
-            background: var(--secondary-bg); padding: 4px 8px; border-radius: 6px;
+            font-size: 10px; 
+            font-weight: 700;
+            color: var(--btn-txt, #fff);           /* White text */
+            background-color: var(--btn, #3390ec); /* Default Blue */
+            padding: 4px 10px; 
+            border-radius: 12px;                   /* Pill shape */
+            text-transform: uppercase;             /* All Caps */
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .card-body {
@@ -178,13 +188,13 @@
             content.innerHTML = `<div class="loading">Loading...</div>`;
 
             try {
-                console.log("Sending InitData:", userData); // Check console to see what's sent
+                console.log("Sending InitData:", userData); 
 
                 const base64Data = btoa(rawInitData);
                 const response = await fetch(`${API_BASE}/alert/telegram`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json', // CRITICAL: Required for Rust to parse the body as JSON
+                        'Content-Type': 'application/json',
                         'x-init-telegram-data': base64Data
                     },
                     body: JSON.stringify(userData.user)
@@ -194,7 +204,6 @@
                 if (!response.ok) throw new Error(`Server Error: ${response.status}`);
 
                 const allAlerts = await response.json();
-                // ✅ FIX: Filter the list client-side to match the selected tab
                 const filteredAlerts = allAlerts.filter(alert => alert.kind === kind);
                 renderAlerts(filteredAlerts);
 
@@ -215,21 +224,32 @@
             content.innerHTML = alerts.map(alert => {
                 const desc = formatDescription(alert);
                 const tokenName = alert.token_id ? `#${alert.token_id}` : "Global";
-                const ex = alert.extra;
+                
+                // --- LOGIC FIX & STYLING ---
+                const ex = alert.extra || {}; 
                 let freq = 'Always';
-                if ex.frequency === 0 {
-                    freq = 'One-time'
+                
+                // 1. Fixed Parentheses ()
+                if (ex.frequency === 0) {
+                    freq = 'One-time';
                 }
-                if ex.frequency === 1 {
-                    freq = 'Daily'
+                if (ex.frequency === 1) {
+                    freq = 'Daily';
                 }
+                
                 let one_time = alert.one_time ? 'One-time' : freq;
                 
+                // 2. Color Logic: Orange for 'One-time', Blue (default) for others
+                const badgeStyle = one_time === 'One-time' 
+                    ? 'background: var(--warning);' 
+                    : '';
+
                 return `
                 <div class="alert-card" id="card-${alert.id_str}">
                     <div class="card-header">
                         <span class="token-badge">🔔 ${tokenName}</span>
-                        <span class="date-badge">${one_time}</span>
+                        
+                        <span class="date-badge" style="${badgeStyle}">${one_time}</span>
                     </div>
                     <div class="card-body">${desc}</div>
                     <div class="card-footer">
@@ -243,7 +263,6 @@
             if(!confirm("Delete this alert?")) return;
 
             try {
-                // ✅ FIX 2: Read tg.initData HERE too
                 const base64Data = btoa(tg.initData);
                 
                 await fetch(`${API_BASE}/alert/telegram/${alertId}`, {
@@ -296,7 +315,6 @@
             const segments = window.location.pathname.split('/').filter(Boolean);
             const possibleId = segments.pop();
 
-            // 2. Debug Display
             const elRaw = document.getElementById("rawInitData");
             if(elRaw) elRaw.innerText = tg.initData;
 
