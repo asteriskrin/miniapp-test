@@ -267,9 +267,9 @@
                 return `Liquidation: <b>${tokens}</b>${amt}`;
             }
             if (k === 6) return `Surge: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
-            if (k === 3) return `OI Change (${ex.midnight ? "on daily open" : ""}): <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
-            if (k === 4) return `FR Change (${ex.midnight ? "on daily open" : ""}): <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
-            if (k === 5) return `FR Change (${ex.midnight ? "on daily open" : ""}): <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 3) return `OI Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 4) return `FR Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 5) return `FR Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
             if (k === 8) {
                 const addr = ex.address ? `${ex.address.substring(0,6)}...` : "Address";
                 return `Track Trade Direction on target address: <b>${addr}</b>`
