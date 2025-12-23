@@ -259,7 +259,7 @@
             if (k === 1) { 
                 const p = alert.target_price || 0;
                 const dir = alert.direction === 1 ? "above" : "below";
-                return `Notify if price goes ${dir} <b>$${p}</b>`;
+                return `Notify if <b>${alert.extra.token}</b> price goes ${dir} <b>$${p}</b>`;
             }
             if (k === 2) { 
                 const amt = ex.minimum_sz ? ` > $${(ex.minimum_sz/1000).toFixed(0)}k` : "";
@@ -278,6 +278,7 @@
                 const addr = ex.address ? `${ex.address.substring(0,6)}...` : "Address";
                 return `New Trade by <b>${addr}</b>`;
             }
+            if (k === 0) return `Notify for new tokens`;
             return "Custom Alert Notification";
         }
 
