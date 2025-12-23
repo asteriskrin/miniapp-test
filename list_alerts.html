@@ -223,7 +223,7 @@
                 if ex.frequency === 1 {
                     freq = 'Daily'
                 }
-                let one_time = alert.one_time ?? freq;
+                let one_time = alert.one_time ? 'One-time' : freq;
                 
                 return `
                 <div class="alert-card" id="card-${alert.id_str}">
