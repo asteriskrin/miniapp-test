@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Alerts</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: var(--tg-theme-bg-color, #fff);
+            --text: var(--tg-theme-text-color, #000);
+            --hint: var(--tg-theme-hint-color, #888);
+            --btn: var(--tg-theme-button-color, #3390ec);
+            --btn-txt: var(--tg-theme-button-text-color, #fff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            --danger: #ff3b30;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0;
+            padding-top: 60px; /* Space for fixed header */
+        }
+
+        /* --- Tabs --- */
+        .tabs-container {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: var(--bg);
+            z-index: 100;
+            border-bottom: 1px solid var(--secondary-bg);
+            white-space: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--secondary-bg);
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .tab.active {
+            background: var(--btn);
+            color: var(--btn-txt);
+        }
+
+        /* --- List --- */
+        .alert-list { padding: 10px; padding-bottom: 40px; }
+        
+        .alert-card {
+            background: var(--bg);
+            border: 1px solid var(--secondary-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .token-badge {
+            font-weight: 700; font-size: 15px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .date-badge {
+            font-size: 11px; color: var(--hint);
+            background: var(--secondary-bg); padding: 4px 8px; border-radius: 6px;
+        }
+
+        .card-body {
+            font-size: 14px; line-height: 1.5; color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .card-footer {
+            border-top: 1px solid var(--secondary-bg);
+            padding-top: 10px;
+            text-align: right;
+        }
+        .btn-delete {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-delete:active { opacity: 0.6; }
+
+        .loading, .empty {
+            text-align: center; padding: 40px; color: var(--hint); font-size: 14px;
+        }
+        .error { color: var(--danger); }
+        
+        /* Debug Info (Hidden by default, un-comment display to see) */
+        .debug-info { display: none; font-size: 10px; word-break: break-all; padding: 10px; color: var(--hint); }
+    </style>
+</head>
+<body>
+
+    <div class="debug-info">
+        <h3>Raw Init Data:</h3>
+        <div id="rawInitData"></div>
+        <h3>Parsed:</h3>
+        <pre id="initData"></pre>
+    </div>
+
+    <div class="tabs-container" id="tabs"></div>
+
+    <div id="content" class="alert-list"></div>
+    <script>
+
+        const tg = window.Telegram.WebApp;
+
+        // Parsed version (object)
+        const userData = tg.initDataUnsafe;
+        document.getElementById("initData").innerText = JSON.stringify(userData, null, 2);
+
+        // Raw version (query string)
+        const rawInitData = tg.initData;
+        document.getElementById("rawInitData").innerText = rawInitData;
+
+        // --- CONSTANTS ---
+        const API_BASE = "https://alerts.blockliquidity.xyz/v1";
+
+        const ALERT_TYPES = [
+            { id: 1, label: "Price" },
+            { id: 2, label: "Liquidations" },
+            { id: 3, label: "Open Interest" },
+            { id: 5, label: "Volume" },
+            { id: 6, label: "Surge" },
+            { id: 9, label: "New Trade" },
+            { id: 8, label: "Direction" },
+            { id: 4, label: "Funding" },
+            { id: 0, label: "New Token" },
+        ];
+
+        let currentKind = 1; 
+        let pathUserId = null; 
+
+        // --- TABS LOGIC ---
+        function renderTabs() {
+            const container = document.getElementById('tabs');
+            container.innerHTML = ALERT_TYPES.map(type => `
+                <div class="tab ${type.id === currentKind ? 'active' : ''}" 
+                     onclick="switchTab(${type.id})">
+                    ${type.label}
+                </div>
+            `).join('');
+        }
+
+        function switchTab(kindId) {
+            currentKind = kindId;
+            renderTabs();
+            loadAlerts(kindId);
+        }
+
+        // --- DATA FETCHING ---
+        async function loadAlerts(kind) {
+            const content = document.getElementById('content');
+            content.innerHTML = `<div class="loading">Loading...</div>`;
+
+            try {
+                console.log("Sending InitData:", userData); // Check console to see what's sent
+
+                const base64Data = btoa(rawInitData);
+                const response = await fetch(`${API_BASE}/alert/telegram`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // CRITICAL: Required for Rust to parse the body as JSON
+                        'X-Init-Telegram-Data': base64Data
+                    },
+                    body: JSON.stringify(userData.user)
+                });
+
+                if (response.status === 403) throw new Error("Unauthorized access.");
+                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+
+                const allAlerts = await response.json();
+                // ✅ FIX: Filter the list client-side to match the selected tab
+                const filteredAlerts = allAlerts.filter(alert => alert.kind === kind);
+                renderAlerts(filteredAlerts);
+
+            } catch (err) {
+                console.error(err);
+                content.innerHTML = `<div class="empty error">${err.message}</div>`;
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const content = document.getElementById('content');
+            
+            if (!alerts || alerts.length === 0) {
+                content.innerHTML = `<div class="empty">No alerts in this category.</div>`;
+                return;
+            }
+
+            content.innerHTML = alerts.map(alert => {
+                const desc = formatDescription(alert);
+                const tokenName = alert.token_id ? `#${alert.token_id}` : "Global"; 
+                
+                return `
+                <div class="alert-card" id="card-${alert.id_str}">
+                    <div class="card-header">
+                        <span class="token-badge">🔔 ${tokenName}</span>
+                        <span class="date-badge">${alert.one_time ? 'One-time' : 'Recurring'}</span>
+                    </div>
+                    <div class="card-body">${desc}</div>
+                    <div class="card-footer">
+                        <button class="btn-delete" onclick="deleteAlert('${alert.id_str}')">Delete</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        async function deleteAlert(alertId) {
+            if(!confirm("Delete this alert?")) return;
+
+            try {
+                // ✅ FIX 2: Read tg.initData HERE too
+                const base64Data = btoa(tg.initData);
+                
+                await fetch(`${API_BASE}/alert/telegram/${alertId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Init-Telegram-Data': base64Data }
+                });
+                
+                const card = document.getElementById(`card-${alertId}`);
+                if(card) {
+                    card.style.opacity = '0.5';
+                    setTimeout(() => card.remove(), 300);
+                }
+            } catch (e) {
+                alert("Failed to delete alert.");
+            }
+        }
+
+        function formatDescription(alert) {
+            const k = alert.kind;
+            const ex = alert.extra || {}; 
+
+            if (k === 1) { 
+                const p = alert.target_price || 0;
+                const dir = alert.direction === 1 ? "above" : "below";
+                return `Notify if price goes ${dir} <b>$${p}</b>`;
+            }
+            if (k === 2) { 
+                const amt = ex.minimum_sz ? ` > $${(ex.minimum_sz/1000).toFixed(0)}k` : "";
+                const tokens = ex.tokens && ex.tokens.length > 0 ? ex.tokens.join(', ') : "Any";
+                return `Liquidation: <b>${tokens}</b>${amt}`;
+            }
+            if (k === 6) return `Surge: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 3) return `OI Change (${ex.midnight ? "on daily open" : ""}): <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 4) return `FR Change (${ex.midnight ? "on daily open" : ""}): <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 5) return `FR Change (${ex.midnight ? "on daily open" : ""}): <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 8) {
+                const addr = ex.address ? `${ex.address.substring(0,6)}...` : "Address";
+                return `Track Trade Direction on target address: <b>${addr}</b>`
+            }
+            if (k === 9) { 
+                const addr = ex.address ? `${ex.address.substring(0,6)}...` : "Address";
+                return `New Trade by <b>${addr}</b>`;
+            }
+            return "Custom Alert Notification";
+        }
+
+        // --- INIT ---
+        function init() {
+            const segments = window.location.pathname.split('/').filter(Boolean);
+            const possibleId = segments.pop();
+
+            // 2. Debug Display
+            const elRaw = document.getElementById("rawInitData");
+            if(elRaw) elRaw.innerText = tg.initData;
+
+            renderTabs();
+            loadAlerts(currentKind);
+        }
+
+        init();
+    </script>
+
+</body>
+</html>
