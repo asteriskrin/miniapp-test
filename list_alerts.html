@@ -92,6 +92,33 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
+        /* --- Token Dropdown Styles --- */
+        .token-dropdown-trigger {
+            cursor: pointer;
+            border-bottom: 1px dashed var(--text);
+            padding-bottom: 1px;
+        }
+        .token-dropdown-trigger:hover {
+            opacity: 0.7;
+        }
+        .token-list-box {
+            display: none; 
+            margin-top: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text);
+            max-height: 120px; 
+            overflow-y: auto;
+            word-break: break-word;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .token-list-box.open {
+            display: block; 
+        }
+
         .card-body {
             font-size: 14px; line-height: 1.5; color: var(--text);
             margin-bottom: 12px;
@@ -119,7 +146,7 @@
         }
         .error { color: var(--danger); }
         
-        /* Debug Info (Hidden by default, un-comment display to see) */
+        /* Debug Info */
         .debug-info { display: none; font-size: 10px; word-break: break-all; padding: 10px; color: var(--hint); }
     </style>
 </head>
@@ -213,7 +240,7 @@
             }
         }
 
-function renderAlerts(alerts) {
+        function renderAlerts(alerts) {
             const content = document.getElementById('content');
             
             if (!alerts || alerts.length === 0) {
@@ -223,53 +250,81 @@ function renderAlerts(alerts) {
 
             content.innerHTML = alerts.map(alert => {
                 const desc = formatDescription(alert);
-                
-                // Define 'ex' early so we can use it for both token logic and frequency logic
                 const ex = alert.extra || {}; 
-
-                // --- FIX: Derive Token Name from 'extra' ---
-                let tokenName = "Global";
+                
+                // --- TOKEN BADGE LOGIC ---
+                let tokenBadgeHtml = "Global";
+                let hiddenListHtml = ""; // HTML for the expandable list
+                
+                // Threshold: If more than this many tokens, use dropdown
+                const COLLAPSE_THRESHOLD = 5; 
 
                 if (ex.token) {
-                    // Case 1: Single token exists (e.g. Price Alerts)
-                    tokenName = ex.token;
+                    // Case 1: Single Token
+                    tokenBadgeHtml = ex.token;
                 } else if (ex.tokens && ex.tokens.length > 0) {
-                    // Case 2: Array of tokens exists (e.g. Liquidation Alerts)
-                    // We join them with a comma if there are multiple
-                    tokenName = Array.isArray(ex.tokens) ? ex.tokens.join(', ') : ex.tokens;
-                }
-                // Case 3: Fallback remains "Global" (e.g. New Trade, where no token is tracked)
+                    // Case 2: Multiple Tokens
+                    const count = ex.tokens.length;
 
-                // --- Existing Logic for Frequency/Badge ---
+                    if (count > COLLAPSE_THRESHOLD) {
+                        // Too many tokens -> Create Dropdown Trigger
+                        tokenBadgeHtml = `<span class="token-dropdown-trigger" onclick="toggleTokenList(event, '${alert.id_str}')">${count} Tokens ▾</span>`;
+                        
+                        // Create the hidden list container
+                        hiddenListHtml = `
+                            <div id="list-${alert.id_str}" class="token-list-box">
+                                <strong>Tracked Tokens:</strong><br>
+                                ${ex.tokens.join(', ')}
+                            </div>
+                        `;
+                    } else {
+                        // Few tokens -> Show inline
+                        tokenBadgeHtml = ex.tokens.join(', ');
+                    }
+                }
+
+                // --- FREQUENCY/COLOR LOGIC ---
                 let freq = 'Always';
-                
-                if (ex.frequency === 0) {
-                    freq = 'One-time';
-                }
-                if (ex.frequency === 1) {
-                    freq = 'Daily';
-                }
+                if (ex.frequency === 0) freq = 'One-time';
+                if (ex.frequency === 1) freq = 'Daily';
                 
                 let one_time = alert.one_time ? 'One-time' : freq;
-                
-                // Orange for 'One-time', Blue (default) for others
-                const badgeStyle = one_time === 'One-time' 
-                    ? 'background: var(--warning);' 
-                    : '';
+                const badgeStyle = one_time === 'One-time' ? 'background: var(--warning);' : '';
 
                 return `
                 <div class="alert-card" id="card-${alert.id_str}">
                     <div class="card-header">
-                        <span class="token-badge">🔔 ${tokenName}</span>
-                        
+                        <span class="token-badge">🔔 ${tokenBadgeHtml}</span>
                         <span class="date-badge" style="${badgeStyle}">${one_time}</span>
                     </div>
-                    <div class="card-body">${desc}</div>
+                    
+                    <div class="card-body">
+                        ${hiddenListHtml}
+                        ${desc}
+                    </div>
+                    
                     <div class="card-footer">
                         <button class="btn-delete" onclick="deleteAlert('${alert.id_str}')">Delete</button>
                     </div>
                 </div>
             `}).join('');
+        }
+
+        // Toggle Function for Token List
+        function toggleTokenList(e, id) {
+            e.stopPropagation(); 
+            const list = document.getElementById(`list-${id}`);
+            const trigger = e.target;
+            
+            if (list) {
+                if (list.classList.contains('open')) {
+                    list.classList.remove('open');
+                    trigger.innerHTML = trigger.innerHTML.replace('▴', '▾');
+                } else {
+                    list.classList.add('open');
+                    trigger.innerHTML = trigger.innerHTML.replace('▾', '▴');
+                }
+            }
         }
 
         async function deleteAlert(alertId) {
@@ -300,17 +355,18 @@ function renderAlerts(alerts) {
             if (k === 1) { 
                 const p = ex.target_price || 0;
                 const dir = ex.direction === 1 ? "above" : "below";
-                return `Notify if <b>${alert.extra.token}</b> price goes ${dir} <b>$${p}</b>`;
+                return `Notify if <b>${ex.token}</b> price goes ${dir} <b>$${p}</b>`;
             }
             if (k === 2) { 
                 const amt = ex.minimum_sz ? ` > $${(ex.minimum_sz/1000).toFixed(0)}k` : "";
-                const tokens = ex.tokens && ex.tokens.length > 0 ? ex.tokens.join(', ') : "Any";
-                return `Liquidation: <b>${tokens}</b>${amt}`;
+                // If it's a multi-token alert, we don't need to repeat tokens in description since it's in the badge now
+                const tokensDesc = ex.tokens && ex.tokens.length > 5 ? "multiple tokens" : (ex.tokens ? ex.tokens.join(', ') : "Any");
+                return `Liquidation: <b>${tokensDesc}</b>${amt}`;
             }
             if (k === 6) return `Surge: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
             if (k === 3) return `OI Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
             if (k === 4) return `FR Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
-            if (k === 5) return `FR Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
+            if (k === 5) return `Volume Change ${ex.midnight ? "(on daily open)" : ""}: <b>${ex.threshold ?? 0}%</b>. Notify ${ex.frequency ?? "always"}`;
             if (k === 8) {
                 const addr = ex.address ? `${ex.address.substring(0,6)}...` : "Address";
                 return `Track Trade Direction on target address: <b>${addr}</b>`
