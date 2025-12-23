@@ -285,7 +285,7 @@
             const ex = alert.extra || {}; 
 
             if (k === 1) { 
-                const p = ex.price_threshold || 0;
+                const p = ex.target_price || 0;
                 const dir = ex.direction === 1 ? "above" : "below";
                 return `Notify if <b>${alert.extra.token}</b> price goes ${dir} <b>$${p}</b>`;
             }
