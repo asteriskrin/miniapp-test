@@ -213,7 +213,7 @@
             }
         }
 
-        function renderAlerts(alerts) {
+function renderAlerts(alerts) {
             const content = document.getElementById('content');
             
             if (!alerts || alerts.length === 0) {
@@ -223,13 +223,26 @@
 
             content.innerHTML = alerts.map(alert => {
                 const desc = formatDescription(alert);
-                const tokenName = alert.token_id ? `#${alert.token_id}` : "Global";
                 
-                // --- LOGIC FIX & STYLING ---
+                // Define 'ex' early so we can use it for both token logic and frequency logic
                 const ex = alert.extra || {}; 
+
+                // --- FIX: Derive Token Name from 'extra' ---
+                let tokenName = "Global";
+
+                if (ex.token) {
+                    // Case 1: Single token exists (e.g. Price Alerts)
+                    tokenName = ex.token;
+                } else if (ex.tokens && ex.tokens.length > 0) {
+                    // Case 2: Array of tokens exists (e.g. Liquidation Alerts)
+                    // We join them with a comma if there are multiple
+                    tokenName = Array.isArray(ex.tokens) ? ex.tokens.join(', ') : ex.tokens;
+                }
+                // Case 3: Fallback remains "Global" (e.g. New Trade, where no token is tracked)
+
+                // --- Existing Logic for Frequency/Badge ---
                 let freq = 'Always';
                 
-                // 1. Fixed Parentheses ()
                 if (ex.frequency === 0) {
                     freq = 'One-time';
                 }
@@ -239,7 +252,7 @@
                 
                 let one_time = alert.one_time ? 'One-time' : freq;
                 
-                // 2. Color Logic: Orange for 'One-time', Blue (default) for others
+                // Orange for 'One-time', Blue (default) for others
                 const badgeStyle = one_time === 'One-time' 
                     ? 'background: var(--warning);' 
                     : '';
