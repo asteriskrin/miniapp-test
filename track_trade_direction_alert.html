@@ -268,15 +268,23 @@
                     body: JSON.stringify({ type: 'meta' })
                 });
 
-                if (!response.ok) throw new Error('Failed to fetch tokens');
+                const spotMetaResponse = await fetch('https://api.hyperliquid.xyz/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'spotMeta' })
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch tokens in meta');
+                if (!spotMetaResponse.ok) throw new Error('Failed to fetch tokens in spotMeta');
 
                 const data = await response.json();
+                const spotData = await spotMetaResponse.json();
+                const allTokensSet = new Set([...data.universe, ...spotData.universe])
+                const allTokensList = [...allTokensSet]
                 
-                if (data.universe && Array.isArray(data.universe)) {
-                    state.allTokens = data.universe
-                        .filter(token => token.name)
-                        .map(token => token.name);
-                }
+                state.allTokens = allTokensList
+                    .filter(token => token.name)
+                    .map(token => token.name);
             } catch (error) {
                 console.error('Error fetching tokens:', error);
                 // Fallback for demo
