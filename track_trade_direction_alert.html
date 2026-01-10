@@ -279,7 +279,7 @@
 
                 const data = await response.json();
                 const spotData = await spotMetaResponse.json();
-                const allTokensSet = new Set([...data.universe, ...spotData.universe])
+                const allTokensSet = new Set([...data.universe, ...spotData.tokens])
                 const allTokensList = [...allTokensSet]
                 
                 state.allTokens = allTokensList
