@@ -46,25 +46,32 @@
             margin-bottom: 8px; 
             min-height: 0; 
         }
+        
         .selected-chip {
             display: inline-flex; align-items: center;
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
             padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500; user-select: none;
         }
+        
+        /* FIX: Summary Chip Style 
+           Using secondary-bg-color for contrast in both modes, 
+           or falling back to a neutral grey if theme vars fail.
+        */
+        .selected-chip.summary {
+            background-color: var(--tg-theme-text-color, #333);
+            color: var(--tg-theme-bg-color, #fff); /* Inverted text for high contrast */
+        }
+
         .selected-chip .remove-btn { margin-left: 8px; cursor: pointer; font-weight: bold; opacity: 0.8; font-size: 16px; line-height: 1; }
         .selected-chip .remove-btn:hover { opacity: 1; }
 
-        /* Summary Chip (for "Select All") */
-        .selected-chip.summary {
-            background-color: var(--tg-theme-text-color, #333); 
-        }
-
+        /* Dropdown */
         .dropdown-list {
             position: absolute; top: 100%; left: 0; right: 0;
             background-color: var(--tg-theme-bg-color, #ffffff);
             border: 1px solid var(--tg-theme-hint-color, #999999);
-            border-radius: 8px; max-height: 250px; overflow-y: auto;
+            border-radius: 8px; max-height: 300px; overflow-y: auto;
             z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: none; margin-top: 4px;
         }
@@ -80,18 +87,36 @@
             align-items: center;
         }
         .dropdown-item:hover { background-color: var(--tg-theme-secondary-bg-color, #f0f0f0); }
-        .dropdown-item.selected { background-color: rgba(0, 136, 204, 0.1); color: var(--tg-theme-button-color, #0088cc); font-weight: 600; }
         
-        /* Checkmark for selected items */
+        /* Selected State */
+        .dropdown-item.selected { 
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0); 
+            color: var(--tg-theme-button-color, #0088cc); 
+            font-weight: 600; 
+        }
         .dropdown-item.selected::after {
             content: '✓';
             font-weight: bold;
+            color: var(--tg-theme-button-color, #0088cc);
         }
 
+        /* FIX: Action Items (Select All / Deselect All) 
+           Ensuring high visibility in dark/light modes.
+        */
         .dropdown-item.action-item {
             font-weight: 600;
+            position: sticky; top: 0; /* Keep actions visible at top */
+            background-color: var(--tg-theme-bg-color, #ffffff);
             border-bottom: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+            z-index: 10;
+        }
+        
+        .dropdown-item.action-select {
             color: var(--tg-theme-button-color, #0088cc);
+        }
+        
+        .dropdown-item.action-deselect {
+            color: #ff3b30; /* Red for deselect/clear */
         }
 
         .dropdown-item.no-results { color: var(--tg-theme-hint-color, #999999); cursor: default; text-align: center; display: block;}
@@ -147,7 +172,7 @@
                     <input 
                         type="text" 
                         id="tokenSearch" 
-                        placeholder="Search or Select All..." 
+                        placeholder="Search tokens..." 
                         autocomplete="off"
                     >
                     <div id="loadingSpinner" class="loading-spinner"></div>
@@ -214,7 +239,7 @@
         const state = {
             allTokens: [],
             filteredTokens: [],
-            selectedTokens: new Set() // Using Set for unique selections
+            selectedTokens: new Set()
         };
 
         // DOM Elements
@@ -228,7 +253,6 @@
         const frequencyInput = document.getElementById('frequency');
         const midnightInput = document.getElementById('midnight');
         
-        // Errors
         const tokensError = document.getElementById('tokensError');
         const thresholdError = document.getElementById('thresholdError');
         const frequencyError = document.getElementById('frequencyError');
@@ -239,7 +263,6 @@
                 loadingSpinner.style.display = 'block';
                 const tokens = await getAllHyperliquidTokens();
                 state.allTokens = tokens;
-                // Pre-populate filteredTokens with all tokens initially
                 state.filteredTokens = tokens; 
             } catch (error) {
                 console.error('Failed to load tokens:', error);
@@ -258,25 +281,24 @@
             } else {
                 state.selectedTokens.add(token);
             }
-            renderChips();
-            renderDropdown(tokenSearchInput.value); // Re-render dropdown to update checks
-            tokensError.classList.remove('show');
-            tokenSearchInput.focus();
+            updateUI();
         }
 
         function selectAllFiltered() {
-            // Adds all tokens currently in the filtered list
             state.filteredTokens.forEach(token => state.selectedTokens.add(token));
+            updateUI();
+        }
+
+        function deselectAll() {
+            state.selectedTokens.clear();
+            updateUI();
+        }
+
+        function updateUI() {
             renderChips();
             renderDropdown(tokenSearchInput.value);
             tokensError.classList.remove('show');
             tokenSearchInput.focus();
-        }
-
-        function clearAllSelections() {
-            state.selectedTokens.clear();
-            renderChips();
-            renderDropdown(tokenSearchInput.value);
         }
 
         // --- Render Functions ---
@@ -289,14 +311,26 @@
                 return token.toLowerCase().includes(query);
             });
 
-            // "Select All" Option (Only show if we have results)
+            // --- Sticky Action Buttons ---
+            
+            // 1. Deselect All (Only if items are selected)
+            if (state.selectedTokens.size > 0) {
+                const deselectItem = document.createElement('div');
+                deselectItem.className = 'dropdown-item action-item action-deselect';
+                deselectItem.textContent = '✖ Deselect All';
+                deselectItem.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    deselectAll();
+                });
+                dropdownList.appendChild(deselectItem);
+            }
+
+            // 2. Select All (Only if we have results to select)
             if (state.filteredTokens.length > 0) {
                 const selectAllItem = document.createElement('div');
-                selectAllItem.className = 'dropdown-item action-item';
-                // Dynamic text: "Select All" or "Select Matching"
-                const text = filterText ? `Select all "${filterText}" matches` : 'Select All Tokens';
+                selectAllItem.className = 'dropdown-item action-item action-select';
+                const text = filterText ? `✓ Select all "${filterText}"` : '✓ Select All Tokens';
                 selectAllItem.textContent = text;
-                
                 selectAllItem.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     selectAllFiltered();
@@ -304,7 +338,8 @@
                 dropdownList.appendChild(selectAllItem);
             }
 
-            // No Results
+            // --- Results List ---
+
             if (state.filteredTokens.length === 0) {
                 const noResult = document.createElement('div');
                 noResult.className = 'dropdown-item no-results';
@@ -313,7 +348,7 @@
                 return;
             }
 
-            // Render Tokens (Limit 50 for performance if filtering is light)
+            // Render limit
             const limit = filterText ? 100 : 50;
             state.filteredTokens.slice(0, limit).forEach(token => {
                 const item = document.createElement('div');
@@ -338,19 +373,17 @@
 
             if (count === 0) return;
 
-            // PERFORMANCE GUARD: 
-            // If user selects 500 tokens, don't render 500 chips (it will crash/lag).
-            // Render a Summary Chip instead if count > 10.
+            // Summary Chip if > 10 items
             if (count > 10) {
                 const chip = document.createElement('div');
                 chip.className = 'selected-chip summary';
                 chip.innerHTML = `
                     ${count} Tokens Selected
-                    <span class="remove-btn" onclick="clearAllSelections()">&times;</span>
+                    <span class="remove-btn" onclick="deselectAll()">&times;</span>
                 `;
                 selectedChipArea.appendChild(chip);
             } else {
-                // Render individual chips
+                // Individual Chips
                 state.selectedTokens.forEach(token => {
                     const chip = document.createElement('div');
                     chip.className = 'selected-chip';
@@ -416,14 +449,11 @@
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-
             if (!validateForm()) return;
 
-            // Convert Set to Array for output
             const tokenList = Array.from(state.selectedTokens);
-
             const formData = {
-                tokens: tokenList, // Changed key from 'token' to 'tokens' (Array)
+                tokens: tokenList,
                 threshold: parseInput(thresholdInput.value),
                 frequency: frequencyInput.value,
                 midnight: midnightInput.checked
@@ -434,7 +464,6 @@
                     type: "oi",
                     data: formData
                 });
-                
                 tg.sendData(jsonData);
                 
                 if (!tg.initDataUnsafe.user) {
@@ -446,7 +475,6 @@
             }
         });
 
-        // Run Init
         initialize();
     </script>
 </body>
