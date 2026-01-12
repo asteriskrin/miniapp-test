@@ -6,12 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Open Interest Alert</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* --- Reset & Base --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
@@ -21,244 +17,83 @@
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding-bottom: 40px;
-        }
+        /* --- Layout --- */
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 40px; }
+        h1 { font-size: 24px; font-weight: 600; margin-bottom: 24px; color: var(--tg-theme-text-color, #000000); }
+        .form-group { margin-bottom: 24px; position: relative; }
+        
+        label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--tg-theme-text-color, #000000); }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            color: var(--tg-theme-text-color, #000000);
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-            position: relative;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--tg-theme-text-color, #000000);
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 16px;
+        /* Inputs */
+        input[type="text"], input[type="number"], select {
+            width: 100%; padding: 12px 16px; font-size: 16px;
             border: 1px solid var(--tg-theme-hint-color, #999999);
             border-radius: 8px;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
             color: var(--tg-theme-text-color, #000000);
-            outline: none;
-            transition: border-color 0.3s;
-            appearance: none;
+            outline: none; transition: border-color 0.3s; appearance: none;
         }
+        input:focus, select:focus { border-color: var(--tg-theme-button-color, #0088cc); }
 
-        input:focus,
-        select:focus {
-            border-color: var(--tg-theme-button-color, #0088cc);
-        }
-
-        /* --- Search Dropdown Styles --- */
+        /* --- Dropdown & Chips --- */
+        .search-wrapper { position: relative; }
         
-        .search-wrapper {
-            position: relative;
-        }
-
-        /* Selected Chip Area */
-        .selected-chip-area {
-            display: flex;
-            margin-bottom: 8px;
-            min-height: 0; 
-        }
-
+        .selected-chip-area { display: flex; margin-bottom: 8px; min-height: 0; }
         .selected-chip {
-            display: inline-flex;
-            align-items: center;
+            display: inline-flex; align-items: center;
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 500;
-            user-select: none;
+            padding: 8px 16px; border-radius: 20px; font-size: 15px; font-weight: 500; user-select: none;
         }
+        .selected-chip .remove-btn { margin-left: 10px; cursor: pointer; font-weight: bold; opacity: 0.8; font-size: 18px; line-height: 1; }
+        .selected-chip .remove-btn:hover { opacity: 1; }
 
-        .selected-chip .remove-btn {
-            margin-left: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            opacity: 0.8;
-            font-size: 18px;
-            line-height: 1;
-        }
-        
-        .selected-chip .remove-btn:hover {
-            opacity: 1;
-        }
-
-        /* Dropdown List */
         .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            position: absolute; top: 100%; left: 0; right: 0;
             background-color: var(--tg-theme-bg-color, #ffffff);
             border: 1px solid var(--tg-theme-hint-color, #999999);
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: none;
-            margin-top: 4px;
+            border-radius: 8px; max-height: 250px; overflow-y: auto;
+            z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none; margin-top: 4px;
         }
+        .dropdown-list.show { display: block; }
+        .dropdown-item { padding: 12px 16px; cursor: pointer; transition: background-color 0.2s; color: var(--tg-theme-text-color, #000000); }
+        .dropdown-item:hover { background-color: var(--tg-theme-secondary-bg-color, #f0f0f0); }
+        .dropdown-item.no-results { color: var(--tg-theme-hint-color, #999999); cursor: default; text-align: center; }
 
-        .dropdown-list.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            color: var(--tg-theme-text-color, #000000);
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-        }
-
-        .dropdown-item.no-results {
-            color: var(--tg-theme-hint-color, #999999);
-            cursor: default;
-            text-align: center;
-        }
-
-        /* Loading Spinner */
         .loading-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(0,0,0,0.1);
+            width: 20px; height: 20px; border: 2px solid rgba(0,0,0,0.1);
             border-top-color: var(--tg-theme-button-color, #0088cc);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            right: 12px;
-            top: 12px;
-            display: none;
+            border-radius: 50%; animation: spin 1s linear infinite;
+            position: absolute; right: 12px; top: 12px; display: none;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Toggle Switch */
+        /* --- Toggle Switch --- */
         .toggle-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 8px;
-            border: 1px solid var(--tg-theme-hint-color, #999999);
-            cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 8px; border: 1px solid var(--tg-theme-hint-color, #999999); cursor: pointer;
         }
+        .toggle-label { margin: 0; cursor: pointer; }
+        .switch { position: relative; display: inline-block; width: 48px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--tg-theme-button-color, #0088cc); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        .toggle-label {
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 48px;
-            height: 28px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: var(--tg-theme-button-color, #0088cc);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
-
-        /* Submit Button */
+        /* --- Utils --- */
         .submit-btn {
-            width: 100%;
-            padding: 14px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            cursor: pointer;
-            transition: opacity 0.3s;
-            margin-top: 8px;
-            margin-bottom: 24px;
+            width: 100%; padding: 14px 24px; font-size: 16px; font-weight: 600;
+            border: none; border-radius: 8px; background-color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff); cursor: pointer; transition: opacity 0.3s;
+            margin-top: 8px; margin-bottom: 24px;
         }
-
-        .submit-btn:hover {
-            opacity: 0.9;
-        }
-
-        .error-message {
-            color: #ff3b30;
-            font-size: 14px;
-            margin-top: 8px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .hint-text {
-            font-size: 12px;
-            color: var(--tg-theme-hint-color, #999999);
-            margin-top: 4px;
-        }
+        .submit-btn:hover { opacity: 0.9; }
+        .error-message { color: #ff3b30; font-size: 14px; margin-top: 8px; display: none; }
+        .error-message.show { display: block; }
+        .hint-text { font-size: 12px; color: var(--tg-theme-hint-color, #999999); margin-top: 4px; }
     </style>
 </head>
 
@@ -283,7 +118,7 @@
                     <div id="loadingSpinner" class="loading-spinner"></div>
                     
                     <div id="dropdownList" class="dropdown-list">
-                        </div>
+                    </div>
                 </div>
 
                 <div class="error-message" id="tokensError"></div>
@@ -330,6 +165,9 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src="token-fetcher.js"></script>
+
     <script>
         const tg = window.Telegram?.WebApp || {
             expand: () => {},
@@ -362,28 +200,17 @@
         const thresholdError = document.getElementById('thresholdError');
         const frequencyError = document.getElementById('frequencyError');
 
-        // --- Fetch Data ---
-        async function fetchTokens() {
+        // --- Initialize ---
+        async function initialize() {
             try {
                 loadingSpinner.style.display = 'block';
-                const response = await fetch('https://api.hyperliquid.xyz/info', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'meta' })
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch tokens');
-
-                const data = await response.json();
-                
-                if (data.universe && Array.isArray(data.universe)) {
-                    state.allTokens = data.universe
-                        .filter(token => token.name)
-                        .map(token => token.name);
-                }
+                // Use the function from token-fetcher.js
+                const tokens = await getAllHyperliquidTokens();
+                state.allTokens = tokens;
             } catch (error) {
-                console.error('Error fetching tokens:', error);
-                state.allTokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI', 'DOGE'];
+                console.error('Failed to load tokens:', error);
+                // Fallback basic list
+                state.allTokens = ['BTC', 'ETH', 'SOL', 'HYPE']; 
             } finally {
                 loadingSpinner.style.display = 'none';
             }
@@ -407,7 +234,7 @@
                 return;
             }
 
-            // Limit to 50 results
+            // Limit results for performance
             state.filteredTokens.slice(0, 50).forEach(token => {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item';
@@ -426,7 +253,6 @@
             selectedChipArea.innerHTML = '';
             
             if (state.selectedToken) {
-                // Hide search input
                 searchWrapper.style.display = 'none';
                 
                 const chip = document.createElement('div');
@@ -437,7 +263,6 @@
                 `;
                 selectedChipArea.appendChild(chip);
             } else {
-                // Show search input
                 searchWrapper.style.display = 'block';
                 tokenSearchInput.value = '';
             }
@@ -473,7 +298,7 @@
             }
         });
 
-        // Helper: Parse Input (Mobile Friendly)
+        // Helper: Parse Input
         function parseInput(val) {
             if (!val) return NaN;
             return parseFloat(val.replace(/,/g, '.'));
@@ -521,7 +346,7 @@
 
             try {
                 const jsonData = JSON.stringify({
-                    type: "oi", // Open Interest Alert Type
+                    type: "oi",
                     data: formData
                 });
                 
@@ -529,14 +354,15 @@
                 
                 if (!tg.initDataUnsafe.user) {
                     console.log('OUTPUT DATA:', jsonData);
-                    alert('Alert saved! Check console for data.');
+                    alert(`Alert saved for ${state.selectedToken}!`);
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
             }
         });
 
-        fetchTokens();
+        // Run Init
+        initialize();
     </script>
 </body>
 </html>
