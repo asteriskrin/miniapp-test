@@ -6,12 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Track Trade Direction</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* --- Reset & Base --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
@@ -21,168 +17,104 @@
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding-bottom: 40px; /* Space for dropdown expansion */
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            color: var(--tg-theme-text-color, #000000);
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-            position: relative; /* For dropdown positioning */
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
+        /* --- Layout --- */
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 40px; }
+        h1 { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
+        
+        .form-group { margin-bottom: 24px; position: relative; }
+        
+        /* Label Row with Actions */
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
-            color: var(--tg-theme-text-color, #000000);
         }
+        label { font-size: 14px; font-weight: 500; }
+        
+        .action-links {
+            font-size: 13px;
+        }
+        .action-link {
+            color: var(--tg-theme-button-color, #0088cc);
+            cursor: pointer;
+            margin-left: 12px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .action-link:hover { text-decoration: underline; }
 
+        /* Inputs */
         input[type="text"] {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 16px;
+            width: 100%; padding: 12px 16px; font-size: 16px;
             border: 1px solid var(--tg-theme-hint-color, #999999);
             border-radius: 8px;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
             color: var(--tg-theme-text-color, #000000);
-            outline: none;
-            transition: border-color 0.3s;
-            appearance: none;
+            outline: none; transition: border-color 0.3s; appearance: none;
         }
+        input:focus { border-color: var(--tg-theme-button-color, #0088cc); }
 
-        input:focus {
-            border-color: var(--tg-theme-button-color, #0088cc);
+        /* --- Chips Area --- */
+        .selected-chips-area { 
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; 
+            min-height: 0; /* Collapsed when empty */
         }
-
-        /* --- Search Dropdown Styles --- */
         
-        .search-wrapper {
-            position: relative;
-        }
-
-        /* Selected Chips Area */
-        .selected-chips-area {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
         .selected-chip {
-            display: inline-flex;
-            align-items: center;
+            display: inline-flex; align-items: center;
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 14px;
+            padding: 6px 12px; border-radius: 16px; font-size: 14px;
             user-select: none;
+            max-width: 100%;
+        }
+        .selected-chip .remove-btn { margin-left: 8px; cursor: pointer; font-weight: bold; opacity: 0.8; }
+        .selected-chip .remove-btn:hover { opacity: 1; }
+
+        /* Special "All Selected" Chip Style */
+        .selected-chip.all-selected {
+            background-color: #34c759; /* Green color for success/all */
+            width: 100%;
+            justify-content: center;
+            padding: 10px;
         }
 
-        .selected-chip .remove-btn {
-            margin-left: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            opacity: 0.8;
-        }
-        
-        .selected-chip .remove-btn:hover {
-            opacity: 1;
-        }
-
-        /* Dropdown List */
+        /* --- Dropdown --- */
+        .search-wrapper { position: relative; }
         .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            position: absolute; top: 100%; left: 0; right: 0;
             background-color: var(--tg-theme-bg-color, #ffffff);
             border: 1px solid var(--tg-theme-hint-color, #999999);
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: none; /* Hidden by default */
-            margin-top: 4px;
+            border-radius: 8px; max-height: 250px; overflow-y: auto;
+            z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none; margin-top: 4px;
         }
+        .dropdown-list.show { display: block; }
+        .dropdown-item { padding: 12px 16px; cursor: pointer; transition: background-color 0.2s; }
+        .dropdown-item:hover { background-color: var(--tg-theme-secondary-bg-color, #f0f0f0); }
+        .dropdown-item.no-results { color: var(--tg-theme-hint-color, #999999); cursor: default; text-align: center; }
 
-        .dropdown-list.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            color: var(--tg-theme-text-color, #000000);
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-        }
-
-        .dropdown-item.no-results {
-            color: var(--tg-theme-hint-color, #999999);
-            cursor: default;
-            text-align: center;
-        }
-
-        /* Loading */
+        /* --- Loading & Buttons --- */
         .loading-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(0,0,0,0.1);
+            width: 20px; height: 20px; border: 2px solid rgba(0,0,0,0.1);
             border-top-color: var(--tg-theme-button-color, #0088cc);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            right: 12px;
-            top: 12px;
-            display: none;
+            border-radius: 50%; animation: spin 1s linear infinite;
+            position: absolute; right: 12px; top: 12px; display: none;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Utilities */
         .submit-btn {
-            width: 100%;
-            padding: 14px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
+            width: 100%; padding: 14px 24px; font-size: 16px; font-weight: 600;
+            border: none; border-radius: 8px;
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
-            cursor: pointer;
-            transition: opacity 0.3s;
-            margin-top: 24px;
+            cursor: pointer; transition: opacity 0.3s; margin-top: 24px;
         }
+        .submit-btn:hover { opacity: 0.9; }
 
-        .submit-btn:hover {
-            opacity: 0.9;
-        }
-
-        .error-message {
-            color: #ff3b30;
-            font-size: 14px;
-            margin-top: 8px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
+        .error-message { color: #ff3b30; font-size: 14px; margin-top: 8px; display: none; }
+        .error-message.show { display: block; }
     </style>
 </head>
 
@@ -191,35 +123,27 @@
         <h1>Track Trade Direction</h1>
         
         <form id="configForm">
-            
             <div class="form-group">
                 <label for="address">Wallet Address</label>
-                <input 
-                    type="text" 
-                    id="address" 
-                    name="address" 
-                    placeholder="Enter wallet address (0x...)"
-                    required
-                >
+                <input type="text" id="address" name="address" placeholder="Enter wallet address (0x...)" required>
                 <div class="error-message" id="addressError"></div>
             </div>
 
             <div class="form-group">
-                <label>Select Tokens</label>
+                <div class="label-row">
+                    <label>Select Tokens</label>
+                    <div class="action-links">
+                        <span class="action-link" id="selectAllBtn">Select All</span>
+                        <span class="action-link" id="clearAllBtn">Clear All</span>
+                    </div>
+                </div>
                 
                 <div class="selected-chips-area" id="selectedChipsArea"></div>
 
                 <div class="search-wrapper">
-                    <input 
-                        type="text" 
-                        id="tokenSearch" 
-                        placeholder="Search to add tokens..." 
-                        autocomplete="off"
-                    >
+                    <input type="text" id="tokenSearch" placeholder="Search to add tokens..." autocomplete="off">
                     <div id="loadingSpinner" class="loading-spinner"></div>
-                    
-                    <div id="dropdownList" class="dropdown-list">
-                        </div>
+                    <div id="dropdownList" class="dropdown-list"></div>
                 </div>
 
                 <div class="error-message" id="tokensError"></div>
@@ -230,10 +154,12 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="token-fetcher.js"></script>
+
     <script>
         const tg = window.Telegram?.WebApp || {
             expand: () => {},
-            sendData: (data) => console.log('Would send to Telegram:', data),
+            sendData: (data) => console.log('Simulated Send:', data),
             initDataUnsafe: {}
         };
         tg.expand();
@@ -241,9 +167,9 @@
 
         // State
         const state = {
-            allTokens: [],       // Full list from API
-            filteredTokens: [],  // Currently visible in dropdown
-            selectedTokens: new Set() // Selected items
+            allTokens: [],
+            filteredTokens: [],
+            selectedTokens: new Set()
         };
 
         // DOM Elements
@@ -253,54 +179,25 @@
         const dropdownList = document.getElementById('dropdownList');
         const selectedChipsArea = document.getElementById('selectedChipsArea');
         const loadingSpinner = document.getElementById('loadingSpinner');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
         
-        // Errors
         const addressError = document.getElementById('addressError');
         const tokensError = document.getElementById('tokensError');
 
-        // --- Fetch Data ---
-        async function fetchTokens() {
-            try {
-                loadingSpinner.style.display = 'block';
-                const response = await fetch('https://api.hyperliquid.xyz/info', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'meta' })
-                });
-
-                const spotMetaResponse = await fetch('https://api.hyperliquid.xyz/info', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'spotMeta' })
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch tokens in meta');
-                if (!spotMetaResponse.ok) throw new Error('Failed to fetch tokens in spotMeta');
-
-                const data = await response.json();
-                const spotData = await spotMetaResponse.json();
-                const allTokensSet = new Set([...data.universe, ...spotData.tokens])
-                const allTokensList = [...allTokensSet]
-                
-                state.allTokens = allTokensList
-                    .filter(token => token.name)
-                    .map(token => token.name);
-            } catch (error) {
-                console.error('Error fetching tokens:', error);
-                // Fallback for demo
-                state.allTokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI', 'DOGE', 'PEPE', 'SUI', 'APT'];
-            } finally {
-                loadingSpinner.style.display = 'none';
-            }
+        // --- Init ---
+        async function initialize() {
+            loadingSpinner.style.display = 'block';
+            const tokens = await getAllHyperliquidTokens();
+            state.allTokens = tokens;
+            loadingSpinner.style.display = 'none';
         }
 
-        // --- Render Functions ---
+        // --- Core Logic ---
 
-        // 1. Render Dropdown Options
         function renderDropdown(filterText = '') {
             dropdownList.innerHTML = '';
             
-            // Filter tokens: match text AND not already selected
             const query = filterText.toLowerCase();
             state.filteredTokens = state.allTokens.filter(token => {
                 const matchesSearch = token.toLowerCase().includes(query);
@@ -308,34 +205,53 @@
                 return matchesSearch && notSelected;
             });
 
+            // If everything is selected
+            if (state.selectedTokens.size === state.allTokens.length && state.allTokens.length > 0) {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item no-results';
+                item.textContent = 'All tokens currently selected';
+                dropdownList.appendChild(item);
+                return;
+            }
+
             if (state.filteredTokens.length === 0) {
                 const noResult = document.createElement('div');
                 noResult.className = 'dropdown-item no-results';
-                noResult.textContent = query ? 'No tokens found' : 'All tokens selected';
+                noResult.textContent = query ? 'No tokens found' : 'All available tokens selected';
                 dropdownList.appendChild(noResult);
                 return;
             }
 
-            // Limit to showing 50 results for performance
+            // Limit render to 50 items for speed
             state.filteredTokens.slice(0, 50).forEach(token => {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item';
                 item.textContent = token;
-                
-                // Use mousedown to prevent 'blur' event from firing before click
                 item.addEventListener('mousedown', (e) => {
-                    e.preventDefault(); // Prevent input blur
+                    e.preventDefault(); 
                     addToken(token);
                 });
-                
                 dropdownList.appendChild(item);
             });
         }
 
-        // 2. Render Selected Chips
         function renderSelectedChips() {
             selectedChipsArea.innerHTML = '';
-            
+
+            // Optimization: If ALL tokens are selected, show just one big chip
+            // This prevents the browser from lagging when rendering 500+ individual chips
+            if (state.selectedTokens.size > 0 && state.selectedTokens.size === state.allTokens.length) {
+                const chip = document.createElement('div');
+                chip.className = 'selected-chip all-selected';
+                chip.innerHTML = `
+                    All ${state.selectedTokens.size} Tokens Selected
+                    <span class="remove-btn" onclick="clearAll()">&times;</span>
+                `;
+                selectedChipsArea.appendChild(chip);
+                return;
+            }
+
+            // Normal rendering
             state.selectedTokens.forEach(token => {
                 const chip = document.createElement('div');
                 chip.className = 'selected-chip';
@@ -347,24 +263,42 @@
             });
         }
 
-        // --- Interaction Logic ---
+        // --- Action Handlers ---
 
         function addToken(token) {
             state.selectedTokens.add(token);
-            tokenSearchInput.value = ''; // Clear search
+            tokenSearchInput.value = ''; 
             renderSelectedChips();
-            renderDropdown(); // Refresh dropdown (removes added item)
-            dropdownList.classList.remove('show'); // Close dropdown
+            renderDropdown(); // Refresh logic
+            dropdownList.classList.remove('show');
             tokensError.classList.remove('show');
         }
 
-        // Exposed globally for the onclick handler in HTML
         window.removeToken = function(token) {
             state.selectedTokens.delete(token);
             renderSelectedChips();
+            renderDropdown(); // Make it appear in dropdown again
         };
 
-        // Input Event Listeners
+        window.clearAll = function() {
+            state.selectedTokens.clear();
+            renderSelectedChips();
+            renderDropdown();
+        };
+
+        selectAllBtn.addEventListener('click', () => {
+            // Add ALL tokens to the set
+            state.allTokens.forEach(t => state.selectedTokens.add(t));
+            tokenSearchInput.value = '';
+            renderSelectedChips();
+            renderDropdown();
+            tokensError.classList.remove('show');
+        });
+
+        clearAllBtn.addEventListener('click', window.clearAll);
+
+        // --- Input Events ---
+
         tokenSearchInput.addEventListener('input', (e) => {
             renderDropdown(e.target.value);
             dropdownList.classList.add('show');
@@ -375,7 +309,6 @@
             dropdownList.classList.add('show');
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.search-wrapper')) {
                 dropdownList.classList.remove('show');
@@ -389,19 +322,17 @@
             addressError.classList.remove('show');
             tokensError.classList.remove('show');
 
-            // Address Validation
             const address = addressInput.value.trim();
             if (!address) {
                 addressError.textContent = 'Address is required';
                 addressError.classList.add('show');
                 isValid = false;
             } else if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-                addressError.textContent = 'Please enter a valid address (starts with 0x)';
+                addressError.textContent = 'Invalid address format (must start with 0x)';
                 addressError.classList.add('show');
                 isValid = false;
             }
 
-            // Tokens Validation
             if (state.selectedTokens.size === 0) {
                 tokensError.textContent = 'Please select at least one token';
                 tokensError.classList.add('show');
@@ -413,12 +344,21 @@
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-
             if (!validateForm()) return;
+
+            let tokenPayload;
+            
+            // Check if ALL are selected
+            if (state.selectedTokens.size === state.allTokens.length && state.allTokens.length > 0) {
+                // Send a special flag to save space (Telegram limit is 4kb)
+                tokenPayload = ["ALL_TOKENS"]; 
+            } else {
+                tokenPayload = Array.from(state.selectedTokens);
+            }
 
             const formData = {
                 address: addressInput.value.trim(),
-                tokens: Array.from(state.selectedTokens)
+                tokens: tokenPayload
             };
 
             try {
@@ -429,17 +369,18 @@
                 
                 tg.sendData(jsonData);
                 
+                // Demo fallback
                 if (!tg.initDataUnsafe.user) {
                     console.log('OUTPUT DATA:', jsonData);
-                    alert('Alert saved! Check console for data.');
+                    console.log(`Payload size: ${new Blob([jsonData]).size} bytes`);
+                    alert(`Alert saved! Selected: ${tokenPayload.length === 1 && tokenPayload[0] === "ALL_TOKENS" ? "ALL" : tokenPayload.length} tokens.`);
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
             }
         });
 
-        // Init
-        fetchTokens();
+        initialize();
     </script>
 </body>
 </html>
