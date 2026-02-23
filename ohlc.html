@@ -243,13 +243,11 @@
                 <div class="menu-item-title">⚡Liquidation Notification</div>
                 <div class="menu-item-description">Get notified when people get liquidated.</div>
             </div>
-            <!-- Add more menu items here in the future -->
-            <!-- 
-            <div class="menu-item" onclick="showNotifications()">
-                <div class="menu-item-title">🔔 Notifications</div>
-                <div class="menu-item-description">Manage notification settings</div>
+            <div class="menu-item" onclick="showMyAlerts()">
+                <div class="menu-item-title">📋 My Alerts</div>
+                <div class="menu-item-description">View and manage your active alerts.</div>
             </div>
-            -->
+            <!-- Add more menu items here in the future -->
         </div>
     </div>
 
@@ -344,6 +342,16 @@
                 tg.MainButton.setText('Submit Alert');
                 tg.MainButton.show();
                 tg.MainButton.enable();
+            }
+        }
+        
+        function showMyAlerts() {
+            // Send signal to bot to show alerts
+            if (tg) {
+                const data = JSON.stringify({
+                    type: "get_alerts"
+                });
+                tg.sendData(data);
             }
         }
         
