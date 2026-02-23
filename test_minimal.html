@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <h1>Mini Test</h1>
+    <p id="status">Loading...</p>
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        const status = document.getElementById('status');
+        
+        status.textContent = 'Ready! Click button below.';
+        
+        tg.ready();
+        tg.expand();
+        
+        // Show the main button
+        tg.MainButton.text = 'SEND TEST DATA';
+        tg.MainButton.show();
+        
+        // When clicked, send test data
+        tg.MainButton.onClick(function() {
+            const testData = JSON.stringify({
+                type: "liq",
+                data: {
+                    address: "0x1234",
+                    tokens: ["BTC", "ETH"],
+                    minimum_sz: 10000
+                }
+            });
+            
+            status.textContent = 'Sending: ' + testData;
+            tg.sendData(testData);
+        });
+    </script>
+</body>
+</html>
