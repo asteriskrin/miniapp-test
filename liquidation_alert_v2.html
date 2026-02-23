@@ -134,10 +134,20 @@
     </form>
 
     <script>
-        const tg = window.Telegram.WebApp;
+        // Check if Telegram WebApp is available
+        const tg = window.Telegram?.WebApp;
         
-        // Expand the web app
-        tg.expand();
+        if (!tg) {
+            alert('Telegram WebApp not available! Open this page from Telegram.');
+            console.error('window.Telegram is not defined');
+        } else {
+            console.log('Telegram WebApp initialized:', tg);
+            console.log('Init data:', tg.initDataUnsafe);
+            
+            // Expand the web app
+            tg.expand();
+            console.log('WebApp expanded');
+        }
         
         // Get form elements
         const form = document.getElementById('alertForm');
@@ -190,53 +200,75 @@
         // Initialize preview
         updateTokenPreview();
 
-        // Configure MainButton
-        tg.MainButton.setText('Submit Alert');
-        tg.MainButton.show();
-        tg.MainButton.enable();
+        // Configure MainButton only if tg is available
+        if (tg) {
+            console.log('Configuring MainButton...');
+            tg.MainButton.setText('Submit Alert');
+            tg.MainButton.show();
+            tg.MainButton.enable();
+            console.log('MainButton configured and shown');
 
-        // Handle MainButton click
-        tg.MainButton.onClick(() => {
-            if (!validateForm()) {
-                return;
-            }
+            // Handle MainButton click
+            tg.MainButton.onClick(() => {
+                console.log('MainButton clicked!');
+                
+                if (!validateForm()) {
+                    console.log('Validation failed');
+                    return;
+                }
 
-            const tokens = parseTokens(tokensInput.value);
-            const address = addressInput.value.trim();
-            const usdc = parseFloat(usdcInput.value);
+                const tokens = parseTokens(tokensInput.value);
+                const address = addressInput.value.trim();
+                const usdc = parseFloat(usdcInput.value);
 
-            const formData = {
-                address: address || null,
-                tokens: tokens,
-                minimum_sz: usdc
-            };
+                const formData = {
+                    address: address || null,
+                    tokens: tokens,
+                    minimum_sz: usdc
+                };
 
-            const jsonData = JSON.stringify({
-                type: "liq",
-                data: formData
+                const jsonData = JSON.stringify({
+                    type: "liq",
+                    data: formData
+                });
+                
+                console.log('Sending data to Telegram:', jsonData);
+                
+                try {
+                    // Send data to bot
+                    tg.sendData(jsonData);
+                    console.log('Data sent successfully');
+                } catch (error) {
+                    console.error('Error sending data:', error);
+                    tg.showAlert('Error sending data: ' + error.message);
+                }
             });
-            
-            console.log('Sending data:', jsonData);
-            
-            // Send data to bot
-            tg.sendData(jsonData);
-        });
+            console.log('MainButton click handler registered');
+        } else {
+            console.error('Cannot configure MainButton - tg is not available');
+        }
 
         // Enable/disable submit button based on form validity
-        form.addEventListener('input', () => {
-            const tokens = parseTokens(tokensInput.value);
-            const usdc = parseFloat(usdcInput.value);
-            
-            if (tokens.length > 0 && !isNaN(usdc) && usdc >= 0) {
-                tg.MainButton.enable();
-            } else {
-                tg.MainButton.disable();
-            }
-        });
+        if (tg) {
+            form.addEventListener('input', () => {
+                const tokens = parseTokens(tokensInput.value);
+                const usdc = parseFloat(usdcInput.value);
+                
+                if (tokens.length > 0 && !isNaN(usdc) && usdc >= 0) {
+                    tg.MainButton.enable();
+                    console.log('MainButton enabled');
+                } else {
+                    tg.MainButton.disable();
+                    console.log('MainButton disabled');
+                }
+            });
 
-        // Theme colors
-        document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
-        document.body.style.color = tg.themeParams.text_color || '#000000';
+            // Theme colors
+            document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
+            document.body.style.color = tg.themeParams.text_color || '#000000';
+        }
+        
+        console.log('Script initialization complete');
     </script>
 </body>
 </html>
