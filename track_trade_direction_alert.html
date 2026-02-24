@@ -154,7 +154,6 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="token-fetcher.js"></script>
 
     <script>
         const tg = window.Telegram?.WebApp || {
@@ -185,12 +184,38 @@
         const addressError = document.getElementById('addressError');
         const tokensError = document.getElementById('tokensError');
 
+        // --- Fetch Tokens ---
+        async function fetchTokens() {
+            try {
+                loadingSpinner.style.display = 'block';
+                const response = await fetch('https://api.hyperliquid.xyz/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'meta' })
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch tokens');
+
+                const data = await response.json();
+                
+                if (data.universe && Array.isArray(data.universe)) {
+                    state.allTokens = data.universe
+                        .filter(token => token.name)
+                        .map(token => token.name);
+                }
+
+            } catch (error) {
+                console.error('Error fetching tokens:', error);
+                // Fallback to common tokens
+                state.allTokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'OP', 'LINK', 'UNI'];
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
         // --- Init ---
         async function initialize() {
-            loadingSpinner.style.display = 'block';
-            const tokens = await getAllHyperliquidTokens();
-            state.allTokens = tokens;
-            loadingSpinner.style.display = 'none';
+            await fetchTokens();
         }
 
         // --- Core Logic ---
