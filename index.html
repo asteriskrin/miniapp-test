@@ -1,27 +1,202 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <title>My Web Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crypto Alerts Hub</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .alert-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .alert-card {
+            display: block;
+            padding: 18px 20px;
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--tg-theme-text-color, #000000);
+            border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .alert-card:hover {
+            background-color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.2);
+        }
+
+        .alert-card:active {
+            transform: translateY(0);
+        }
+
+        .alert-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .alert-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .alert-description {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #999);
+            line-height: 1.4;
+            margin-left: 36px;
+        }
+
+        .alert-card:hover .alert-description {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 12px;
+        }
+    </style>
 </head>
 
 <body>
-    <p>tg.initDataUnsafe</p>
-    <pre id="initData"></pre>
+    <div class="container">
+        <h1>🔔 Block Liquidity Hub</h1>
+        <p class="subtitle">Select your notification</p>
 
-    <p>tg.initData (raw)</p>
-    <pre id="rawInitData"></pre>
+        <div class="alert-grid">
+            <a href="funding_rate_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">💰</span>
+                    <span class="alert-title">Funding Rate Alert</span>
+                </div>
+                <div class="alert-description">Get notified when funding rates change significantly</div>
+            </a>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+            <a href="liquidation_alert_v2.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">⚡</span>
+                    <span class="alert-title">Liquidation Alert</span>
+                </div>
+                <div class="alert-description">Track liquidation events and sizes</div>
+            </a>
+
+            <a href="new_trade_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">📊</span>
+                    <span class="alert-title">New Trade Alert</span>
+                </div>
+                <div class="alert-description">Monitor new trades as they happen</div>
+            </a>
+
+            <a href="open_interest_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">📈</span>
+                    <span class="alert-title">Open Interest Alert</span>
+                </div>
+                <div class="alert-description">Track changes in open interest</div>
+            </a>
+
+            <a href="price_surge_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">🚀</span>
+                    <span class="alert-title">Price Surge Alert</span>
+                </div>
+                <div class="alert-description">Get alerted on rapid price movements</div>
+            </a>
+
+            <a href="token_price_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">💵</span>
+                    <span class="alert-title">Token Price Alert</span>
+                </div>
+                <div class="alert-description">Set custom price targets for tokens</div>
+            </a>
+
+            <a href="volume_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">📊</span>
+                    <span class="alert-title">Volume Alert</span>
+                </div>
+                <div class="alert-description">Monitor trading volume spikes</div>
+            </a>
+
+            <a href="track_trade_direction_alert.html" class="alert-card">
+                <div class="alert-card-header">
+                    <span class="alert-icon">🎯</span>
+                    <span class="alert-title">Trade Direction Alert</span>
+                </div>
+                <div class="alert-description">Track specific wallet trading activities</div>
+            </a>
+        </div>
+
+        <div class="footer">
+            Powered by OHLC Finance at <a href="https://ohlc.finance" target="_blank">https://ohlc.finance</a>
+        </div>
+    </div>
+
     <script>
-        const tg = window.Telegram.WebApp;
-
-        // Parsed version (object)
-        const userData = tg.initDataUnsafe;
-        document.getElementById("initData").innerText = JSON.stringify(userData, null, 2);
-
-        // Raw version (query string)
-        const rawInitData = tg.initData;
-        document.getElementById("rawInitData").innerText = rawInitData;
+        const tg = window.Telegram?.WebApp;
+        
+        if (tg) {
+            tg.expand();
+            tg.MainButton.hide();
+            
+            // Apply theme colors
+            if (tg.themeParams) {
+                document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
+                document.body.style.color = tg.themeParams.text_color || '#000000';
+            }
+        }
     </script>
 </body>
 

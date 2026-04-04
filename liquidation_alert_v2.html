@@ -21,6 +21,21 @@
             margin: 0 auto;
         }
 
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: var(--tg-theme-button-color, #0088cc);
+            text-decoration: none;
+            font-size: 16px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .back-button:hover {
+            opacity: 0.8;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -89,6 +104,7 @@
     </style>
 </head>
 <body>
+    <a href="index.html" class="back-button">← Back to Home</a>
     <h1>⚡ Liquidation Alerts</h1>
 
     <form id="alertForm">
