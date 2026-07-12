@@ -6,12 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>New Trade Alert</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* --- Reset & Base --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
@@ -21,95 +17,147 @@
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        /* --- Layout --- */
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 40px; }
+        h1 { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            color: var(--tg-theme-text-color, #000000);
-        }
+        .form-group { margin-bottom: 24px; position: relative; }
 
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
+        /* Label Row with Actions */
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
-            color: var(--tg-theme-text-color, #000000);
         }
+        label { font-size: 14px; font-weight: 500; }
 
+        .action-links { font-size: 13px; }
+        .action-link {
+            color: var(--tg-theme-button-color, #0088cc);
+            cursor: pointer;
+            margin-left: 12px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .action-link:hover { text-decoration: underline; }
+
+        /* Inputs */
         input[type="text"] {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 16px;
+            width: 100%; padding: 12px 16px; font-size: 16px;
             border: 1px solid var(--tg-theme-hint-color, #999999);
             border-radius: 8px;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
             color: var(--tg-theme-text-color, #000000);
-            outline: none;
-            transition: border-color 0.3s;
-            appearance: none;
+            outline: none; transition: border-color 0.3s; appearance: none;
         }
+        input:focus { border-color: var(--tg-theme-button-color, #0088cc); }
 
-        input:focus {
-            border-color: var(--tg-theme-button-color, #0088cc);
+        /* All-tokens toggle */
+        .toggle-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px; border-radius: 8px;
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
         }
+        .toggle-row input[type="checkbox"] { width: 18px; height: 18px; }
+        .toggle-row label { margin: 0; cursor: pointer; }
+        .hint { font-size: 13px; color: var(--tg-theme-hint-color, #999999); margin-top: 6px; }
 
-        /* Submit Button */
-        .submit-btn {
-            width: 100%;
-            padding: 14px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
+        /* --- Chips Area --- */
+        .selected-chips-area {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
+            min-height: 0; /* Collapsed when empty */
+        }
+        .selected-chip {
+            display: inline-flex; align-items: center;
             background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
-            cursor: pointer;
-            transition: opacity 0.3s;
-            margin-top: 8px;
+            padding: 6px 12px; border-radius: 16px; font-size: 14px;
+            user-select: none; max-width: 100%;
+        }
+        .selected-chip .remove-btn { margin-left: 8px; cursor: pointer; font-weight: bold; opacity: 0.8; }
+        .selected-chip .remove-btn:hover { opacity: 1; }
+        .selected-chip.all-selected {
+            background-color: #34c759; width: 100%; justify-content: center; padding: 10px;
         }
 
-        .submit-btn:hover {
-            opacity: 0.9;
+        /* --- Dropdown --- */
+        .search-wrapper { position: relative; }
+        .dropdown-list {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            border: 1px solid var(--tg-theme-hint-color, #999999);
+            border-radius: 8px; max-height: 250px; overflow-y: auto;
+            z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none; margin-top: 4px;
         }
+        .dropdown-list.show { display: block; }
+        .dropdown-item { padding: 12px 16px; cursor: pointer; transition: background-color 0.2s; }
+        .dropdown-item:hover { background-color: var(--tg-theme-secondary-bg-color, #f0f0f0); }
+        .dropdown-item.no-results { color: var(--tg-theme-hint-color, #999999); cursor: default; text-align: center; }
 
-        .error-message {
-            color: #ff3b30;
-            font-size: 14px;
-            margin-top: 8px;
-            display: none;
+        /* --- Loading & Buttons --- */
+        .loading-spinner {
+            width: 20px; height: 20px; border: 2px solid rgba(0,0,0,0.1);
+            border-top-color: var(--tg-theme-button-color, #0088cc);
+            border-radius: 50%; animation: spin 1s linear infinite;
+            position: absolute; right: 12px; top: 12px; display: none;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .error-message.show {
-            display: block;
+        .submit-btn {
+            width: 100%; padding: 14px 24px; font-size: 16px; font-weight: 600;
+            border: none; border-radius: 8px;
+            background-color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            cursor: pointer; transition: opacity 0.3s; margin-top: 24px;
         }
+        .submit-btn:hover { opacity: 0.9; }
+
+        .error-message { color: #ff3b30; font-size: 14px; margin-top: 8px; display: none; }
+        .error-message.show { display: block; }
+        .hidden { display: none !important; }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1>New Trade Alert</h1>
-        
+
         <form id="configForm">
-            
             <div class="form-group">
                 <label for="address">Wallet Address</label>
-                <input 
-                    type="text" 
-                    id="address" 
-                    name="address" 
-                    placeholder="Enter wallet address (0x...)"
-                    required
-                >
+                <input type="text" id="address" name="address" placeholder="Enter wallet address (0x...)" required>
                 <div class="error-message" id="addressError"></div>
+            </div>
+
+            <div class="form-group">
+                <div class="toggle-row">
+                    <input type="checkbox" id="allTokensToggle" checked>
+                    <label for="allTokensToggle">Alert on all tokens</label>
+                </div>
+                <div class="hint">Turn this off to only get notified for specific token(s).</div>
+            </div>
+
+            <!-- Specific-token picker, shown only when "all tokens" is off -->
+            <div class="form-group hidden" id="tokenPickerGroup">
+                <div class="label-row">
+                    <label>Select Tokens</label>
+                    <div class="action-links">
+                        <span class="action-link" id="selectAllBtn">Select All</span>
+                        <span class="action-link" id="clearAllBtn">Clear All</span>
+                    </div>
+                </div>
+
+                <div class="selected-chips-area" id="selectedChipsArea"></div>
+
+                <div class="search-wrapper">
+                    <input type="text" id="tokenSearch" placeholder="Search to add tokens..." autocomplete="off">
+                    <div id="loadingSpinner" class="loading-spinner"></div>
+                    <div id="dropdownList" class="dropdown-list"></div>
+                </div>
+
+                <div class="error-message" id="tokensError"></div>
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">Save Alert</button>
@@ -117,33 +165,202 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="token-fetcher.js"></script>
+
     <script>
         const tg = window.Telegram?.WebApp || {
             expand: () => {},
-            sendData: (data) => console.log('Would send to Telegram:', data),
-            initDataUnsafe: {}
+            sendData: (data) => console.log('Simulated Send:', data),
+            initDataUnsafe: {},
+            MainButton: { hide: () => {} }
         };
         tg.expand();
         tg.MainButton.hide();
 
-        // Elements
+        // State
+        const state = {
+            allTokens: [],
+            filteredTokens: [],
+            selectedTokens: new Set()
+        };
+
+        // DOM Elements
         const form = document.getElementById('configForm');
         const addressInput = document.getElementById('address');
+        const allTokensToggle = document.getElementById('allTokensToggle');
+        const tokenPickerGroup = document.getElementById('tokenPickerGroup');
+        const tokenSearchInput = document.getElementById('tokenSearch');
+        const dropdownList = document.getElementById('dropdownList');
+        const selectedChipsArea = document.getElementById('selectedChipsArea');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
         const addressError = document.getElementById('addressError');
+        const tokensError = document.getElementById('tokensError');
+
+        // --- Init ---
+        // The token list is only needed for the specific-token picker, so it is
+        // loaded lazily the first time the user turns "all tokens" off.
+        let tokensLoaded = false;
+        async function ensureTokensLoaded() {
+            if (tokensLoaded) return;
+            tokensLoaded = true;
+            loadingSpinner.style.display = 'block';
+            state.allTokens = await getAllHyperliquidTokens();
+            loadingSpinner.style.display = 'none';
+        }
+
+        // --- Toggle between "all tokens" and the specific-token picker ---
+        function syncPickerVisibility() {
+            if (allTokensToggle.checked) {
+                tokenPickerGroup.classList.add('hidden');
+                tokensError.classList.remove('show');
+            } else {
+                tokenPickerGroup.classList.remove('hidden');
+                ensureTokensLoaded();
+            }
+        }
+        allTokensToggle.addEventListener('change', syncPickerVisibility);
+
+        // --- Core Logic (ported from the Track Trade Direction picker) ---
+
+        function renderDropdown(filterText = '') {
+            dropdownList.innerHTML = '';
+
+            const query = filterText.toLowerCase();
+            state.filteredTokens = state.allTokens.filter(token => {
+                const matchesSearch = token.toLowerCase().includes(query);
+                const notSelected = !state.selectedTokens.has(token);
+                return matchesSearch && notSelected;
+            });
+
+            if (state.selectedTokens.size === state.allTokens.length && state.allTokens.length > 0) {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item no-results';
+                item.textContent = 'All tokens currently selected';
+                dropdownList.appendChild(item);
+                return;
+            }
+
+            if (state.filteredTokens.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.className = 'dropdown-item no-results';
+                noResult.textContent = query ? 'No tokens found' : 'All available tokens selected';
+                dropdownList.appendChild(noResult);
+                return;
+            }
+
+            state.filteredTokens.slice(0, 50).forEach(token => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = token;
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    addToken(token);
+                });
+                dropdownList.appendChild(item);
+            });
+        }
+
+        function renderSelectedChips() {
+            selectedChipsArea.innerHTML = '';
+
+            // Collapse a full selection into one chip to avoid rendering 500+ nodes.
+            if (state.selectedTokens.size > 0 && state.selectedTokens.size === state.allTokens.length) {
+                const chip = document.createElement('div');
+                chip.className = 'selected-chip all-selected';
+                chip.innerHTML = `
+                    All ${state.selectedTokens.size} Tokens Selected
+                    <span class="remove-btn" onclick="clearAll()">&times;</span>
+                `;
+                selectedChipsArea.appendChild(chip);
+                return;
+            }
+
+            state.selectedTokens.forEach(token => {
+                const chip = document.createElement('div');
+                chip.className = 'selected-chip';
+                chip.innerHTML = `
+                    ${token}
+                    <span class="remove-btn" onclick="removeToken('${token}')">&times;</span>
+                `;
+                selectedChipsArea.appendChild(chip);
+            });
+        }
+
+        // --- Action Handlers ---
+
+        function addToken(token) {
+            state.selectedTokens.add(token);
+            tokenSearchInput.value = '';
+            renderSelectedChips();
+            renderDropdown();
+            dropdownList.classList.remove('show');
+            tokensError.classList.remove('show');
+        }
+
+        window.removeToken = function(token) {
+            state.selectedTokens.delete(token);
+            renderSelectedChips();
+            renderDropdown();
+        };
+
+        window.clearAll = function() {
+            state.selectedTokens.clear();
+            renderSelectedChips();
+            renderDropdown();
+        };
+
+        selectAllBtn.addEventListener('click', () => {
+            state.allTokens.forEach(t => state.selectedTokens.add(t));
+            tokenSearchInput.value = '';
+            renderSelectedChips();
+            renderDropdown();
+            tokensError.classList.remove('show');
+        });
+
+        clearAllBtn.addEventListener('click', window.clearAll);
+
+        // --- Input Events ---
+
+        tokenSearchInput.addEventListener('input', (e) => {
+            renderDropdown(e.target.value);
+            dropdownList.classList.add('show');
+        });
+
+        tokenSearchInput.addEventListener('focus', () => {
+            renderDropdown(tokenSearchInput.value);
+            dropdownList.classList.add('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrapper')) {
+                dropdownList.classList.remove('show');
+            }
+        });
+
+        // --- Validation & Submit ---
 
         function validateForm() {
             let isValid = true;
             addressError.classList.remove('show');
+            tokensError.classList.remove('show');
 
             const address = addressInput.value.trim();
-            
             if (!address) {
                 addressError.textContent = 'Address is required';
                 addressError.classList.add('show');
                 isValid = false;
             } else if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-                addressError.textContent = 'Please enter a valid address (starts with 0x)';
+                addressError.textContent = 'Invalid address format (must start with 0x)';
                 addressError.classList.add('show');
+                isValid = false;
+            }
+
+            if (!allTokensToggle.checked && state.selectedTokens.size === 0) {
+                tokensError.textContent = 'Please select at least one token (or turn "Alert on all tokens" back on)';
+                tokensError.classList.add('show');
                 isValid = false;
             }
 
@@ -152,11 +369,24 @@
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-
             if (!validateForm()) return;
 
+            // Wire format matches notification-core's TokenFilter:
+            //   - "ALL_TOKEN" (string)  → fire for every coin
+            //   - ["BTC","Gold"] (array) → fire only for these exact HL coin symbols
+            // A full manual selection collapses to "ALL_TOKEN" to stay well under
+            // Telegram's ~4KB WebApp data limit.
+            let tokenPayload;
+            const allSelected = state.selectedTokens.size === state.allTokens.length && state.allTokens.length > 0;
+            if (allTokensToggle.checked || allSelected) {
+                tokenPayload = "ALL_TOKEN";
+            } else {
+                tokenPayload = Array.from(state.selectedTokens);
+            }
+
             const formData = {
-                address: addressInput.value.trim()
+                address: addressInput.value.trim(),
+                tokens: tokenPayload
             };
 
             try {
@@ -164,17 +394,22 @@
                     type: "new_trade",
                     data: formData
                 });
-                
+
                 tg.sendData(jsonData);
-                
+
                 if (!tg.initDataUnsafe.user) {
                     console.log('OUTPUT DATA:', jsonData);
-                    alert('Alert saved! Check console for data.');
+                    const scope = tokenPayload === "ALL_TOKEN" ? "ALL tokens" : `${tokenPayload.length} token(s)`;
+                    alert(`Alert saved! Scope: ${scope}.`);
                 }
             } catch (error) {
                 console.error('Error sending data:', error);
             }
         });
+
+        // Default = "all tokens": picker hidden until the user opts into a filter.
+        syncPickerVisibility();
     </script>
 </body>
+
 </html>
